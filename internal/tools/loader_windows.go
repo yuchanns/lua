@@ -1,10 +1,9 @@
-//go:build !windows
+//go:build windows
 
-package lua
+package tools
 
 import (
-	"github.com/ebitengine/purego"
-	"golang.org/x/sys/unix"
+	"golang.org/x/sys/windows"
 	"sync"
 )
 
@@ -28,7 +27,7 @@ func BytePtrFromString(s string) (*byte, error) {
 	cacheMutex.RUnlock()
 
 	// Not in cache, create new
-	ptr, err := unix.BytePtrFromString(s)
+	ptr, err := windows.BytePtrFromString(s)
 	if err != nil {
 		return nil, err
 	}
@@ -47,18 +46,22 @@ func BytePtrToString(p *byte) string {
 	if p == nil {
 		return ""
 	}
-	return unix.BytePtrToString(p)
+	return windows.BytePtrToString(p)
 }
 
 func LoadLibrary(path string) (uintptr, error) {
-	return purego.Dlopen(path, purego.RTLD_LAZY|purego.RTLD_GLOBAL)
+	handle, err := windows.LoadLibrary(path)
+	if err != nil {
+		return 0, err
+	}
+	return uintptr(handle), nil
 }
 
 func FreeLibrary(handle uintptr) error {
 	if handle == 0 {
 		return nil
 	}
-	err := purego.Dlclose(handle)
+	err := windows.FreeLibrary(windows.Handle(handle))
 	if err != nil {
 		return err
 	}
@@ -69,9 +72,9 @@ func GetProcAddress(handle uintptr, name string) (uintptr, error) {
 	if handle == 0 {
 		return 0, nil
 	}
-	addr, err := purego.Dlsym(handle, name)
+	proc, err := windows.GetProcAddress(windows.Handle(handle), name)
 	if err != nil {
 		return 0, err
 	}
-	return addr, nil
+	return proc, nil
 }

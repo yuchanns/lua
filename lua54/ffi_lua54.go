@@ -5,6 +5,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"go.yuchanns.xyz/lua/internal/tools"
 )
 
 type LuaCFunction func(L unsafe.Pointer) int
@@ -43,7 +44,7 @@ type ffi struct {
 }
 
 func newFFI(path string) (FFI *ffi, err error) {
-	lib, err := LoadLibrary(path)
+	lib, err := tools.LoadLibrary(path)
 	if err != nil {
 		return
 	}

@@ -2,8 +2,9 @@ package lua
 
 import (
 	"fmt"
-	"reflect"
 	"unsafe"
+
+	"go.yuchanns.xyz/lua/internal/tools"
 )
 
 type State struct {
@@ -35,7 +36,7 @@ func (s *State) Close() {
 		return
 	}
 
-	defer FreeLibrary(s.ffi.lib)
+	defer tools.FreeLibrary(s.ffi.lib)
 
 	s.ffi.LuaClose(s.L)
 	s.L = nil
@@ -56,68 +57,6 @@ func (s *State) PushCFunction(f LuaCFunction) {
 	s.PushCClousure(f, 0)
 }
 
-func (s *State) PushGoFunction(f any) {
-	t := reflect.TypeOf(f)
-	if t.Kind() != reflect.Func {
-		panic(fmt.Sprintf("expected a function, got %s", t.Kind()))
-	}
-	v := reflect.ValueOf(f)
-
-	var fn LuaCFunction = func(L unsafe.Pointer) int {
-		args := make([]reflect.Value, 0, t.NumIn())
-
-		for i := range t.NumIn() {
-			var arg reflect.Value
-			switch t.In(i).Kind() {
-			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				arg = reflect.ValueOf(s.ffi.LuaLCheckinteger(L, i+1))
-			case reflect.Float64, reflect.Float32:
-				arg = reflect.ValueOf(s.ffi.LuaLChecknumber(L, i+1))
-			case reflect.String:
-				p := s.ffi.LuaLChecklstring(L, i+1, nil)
-				arg = reflect.ValueOf(BytePtrToString(p))
-			case reflect.Bool:
-				s.ffi.LuaLChecktype(L, i+1, LUA_TBOOLEAN)
-				arg = reflect.ValueOf(s.ffi.LuaToboolean(L, i+1) != 0)
-			default:
-				panic(fmt.Sprintf("unsupported argument type: %s", t.In(i).Kind()))
-			}
-			args = append(args, arg)
-		}
-		results := v.Call(args)
-		n := len(results)
-		for i := range n {
-			switch results[i].Kind() {
-			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				s.ffi.LuaPushinteger(L, results[i].Int())
-			case reflect.Float64, reflect.Float32:
-				s.ffi.LuaPushnumber(L, results[i].Float())
-			case reflect.String:
-				str := results[i].String()
-				nptr, err := BytePtrFromString(str)
-				if err != nil {
-					panic(fmt.Sprintf("failed to convert string to byte pointer: %v", err))
-				}
-				s.ffi.LuaPushlstring(L, nptr, len(str))
-			case reflect.Bool:
-				var b int
-				if results[i].Bool() {
-					b = 1
-				}
-				s.ffi.LuaPushboolean(L, b)
-			default:
-				panic(fmt.Sprintf("unsupported return type: %s", results[i].Kind()))
-			}
-		}
-
-		return n
-	}
-
-	s.PushCFunction(fn)
-
-	return
-}
-
 func (s *State) ToString(idx int) string {
 	return s.ToLString(idx, nil)
 }
@@ -127,11 +66,11 @@ func (s *State) ToLString(idx int, size unsafe.Pointer) string {
 	if p == nil {
 		return ""
 	}
-	return BytePtrToString(p)
+	return tools.BytePtrToString(p)
 }
 
 func (s *State) SetGlobal(name string) (err error) {
-	n, err := BytePtrFromString(name)
+	n, err := tools.BytePtrFromString(name)
 	if err != nil {
 		return
 	}
@@ -168,7 +107,7 @@ func (s *State) DoString(scode string) (err error) {
 }
 
 func (s *State) LoadString(scode string) (err error) {
-	n, err := BytePtrFromString(scode)
+	n, err := tools.BytePtrFromString(scode)
 	if err != nil {
 		return
 	}

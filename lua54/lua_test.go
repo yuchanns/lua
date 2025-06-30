@@ -1,13 +1,14 @@
 package lua_test
 
 import (
+	"fmt"
 	"reflect"
-	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.yuchanns.xyz/lua"
+	"go.yuchanns.xyz/lua/internal/tools"
+	"go.yuchanns.xyz/lua/lua54"
 )
 
 type Suite struct {
@@ -15,24 +16,17 @@ type Suite struct {
 }
 
 func (s *Suite) Setup() (err error) {
-	var path string
-
-	// INFO: Currently, we only support lua5.4.8.
-	// More versions can be added later.
-	switch runtime.GOOS {
-	case "darwin":
-		path = "/opt/homebrew/Cellar/lua/5.4.8/lib/liblua.dylib"
-	case "linux":
-		path = "/lib64/liblua-5.4.so"
+	path, err := tools.FindLuaLibrary("5.4")
+	if err != nil {
+		return fmt.Errorf("failed to find Lua library: %w", err)
 	}
 
 	s.state, err = lua.NewState(path)
-
 	if err != nil {
-		return
+		return fmt.Errorf("failed to create Lua state with library %s: %w", path, err)
 	}
 
-	return
+	return nil
 }
 
 func (s *Suite) TearDown() {
