@@ -1,2 +1,53 @@
 # lua
-Lua Go binding in purego + libffi
+Lua Go binding in purego
+
+## Installation
+
+```bash
+go get go.yuchanns.xyz/lua
+```
+
+## Usage
+
+```go
+package main
+
+import (
+    "fmt"
+    "go.yuchanns.xyz/lua/lua54"
+)
+
+func main() {
+    L := lua.NewState()
+    defer L.Close()
+
+    // Load a Lua script
+    if err := L.DoString(`print("Hello, Lua!")`); err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
+
+    // Call a Go function from Lua
+    L.PushGoFunction(func(x float64) float64 {
+        return x * 2
+    })
+    if err := L.SetGlobal("double_number"); err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
+    if err := L.DoString(`print(double_number(21))`); err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
+}
+```
+
+## Development
+
+### Run Tests
+
+```bash
+make tests-54
+
+cd lua54 && go test -v .
+```

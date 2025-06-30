@@ -12,16 +12,16 @@ import (
 )
 
 type Suite struct {
-	state *lua.State
+	L *lua.State
 }
 
 func (s *Suite) Setup() (err error) {
-	path, err := tools.FindLuaLibrary("5.4")
+	path, err := tools.FindLocalLuaLibrary("54")
 	if err != nil {
 		return fmt.Errorf("failed to find Lua library: %w", err)
 	}
 
-	s.state, err = lua.NewState(path)
+	s.L, err = lua.NewState(path)
 	if err != nil {
 		return fmt.Errorf("failed to create Lua state with library %s: %w", path, err)
 	}
@@ -30,8 +30,8 @@ func (s *Suite) Setup() (err error) {
 }
 
 func (s *Suite) TearDown() {
-	if s.state != nil {
-		s.state.Close()
+	if s.L != nil {
+		s.L.Close()
 	}
 }
 
@@ -58,10 +58,10 @@ func TestSuite(t *testing.T) {
 }
 
 func (s *Suite) TestBasic(assert *require.Assertions) {
-	state := s.state
-	state.PushGoFunction(func(x float64) float64 {
+	L := s.L
+	L.PushGoFunction(func(x float64) float64 {
 		return x * 2
 	})
-	assert.NoError(state.SetGlobal("double_number"))
-	assert.NoError(state.DoString(`print(double_number(21))`))
+	assert.NoError(L.SetGlobal("double_number"))
+	assert.NoError(L.DoString(`print(double_number(21))`))
 }
