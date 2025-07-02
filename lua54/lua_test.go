@@ -1,7 +1,6 @@
 package lua_test
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -12,30 +11,32 @@ import (
 )
 
 type Suite struct {
-	L *lua.State
+	lib *lua.Lib
 }
 
 func (s *Suite) Setup() (err error) {
 	path, err := tools.FindLocalLuaLibrary("54")
 	if err != nil {
-		return fmt.Errorf("failed to find Lua library: %w", err)
+		return
 	}
-
-	s.L, err = lua.NewState(path)
+	s.lib, err = lua.New(path)
 	if err != nil {
-		return fmt.Errorf("failed to create Lua state with library %s: %w", path, err)
+		return
 	}
 
 	return nil
 }
 
 func (s *Suite) TearDown() {
-	if s.L != nil {
-		s.L.Close()
+	if s.lib == nil {
+		return
 	}
+	s.lib.Close()
 }
 
 func TestSuite(t *testing.T) {
+	t.Parallel()
+
 	assert := require.New(t)
 
 	suite := &Suite{}
@@ -47,18 +48,27 @@ func TestSuite(t *testing.T) {
 	tt := reflect.TypeOf(suite)
 	for i := range tt.NumMethod() {
 		method := tt.Method(i)
-		testFunc, ok := method.Func.Interface().(func(*Suite, *require.Assertions))
+		testFunc, ok := method.Func.Interface().(func(*Suite, *require.Assertions, *lua.State))
 		if !ok {
 			continue
 		}
+
 		t.Run(strings.TrimLeft(method.Name, "Test"), func(t *testing.T) {
-			testFunc(suite, require.New(t))
+			t.Parallel()
+
+			assert := require.New(t)
+
+			L, err := suite.lib.NewState()
+			assert.NoError(err)
+
+			t.Cleanup(L.Close)
+
+			testFunc(suite, assert, L)
 		})
 	}
 }
 
-func (s *Suite) TestBasic(assert *require.Assertions) {
-	L := s.L
+func (s *Suite) TestBasic(assert *require.Assertions, L *lua.State) {
 	L.PushGoFunction(func(x float64) float64 {
 		return x * 2
 	})
