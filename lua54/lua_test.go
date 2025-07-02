@@ -34,6 +34,33 @@ func (s *Suite) TearDown() {
 	s.lib.Close()
 }
 
+type funcWithState = func(*Suite, *require.Assertions, *lua.State)
+
+func (s *Suite) testWithState(testFunc funcWithState) func(t *testing.T) {
+	return func(t *testing.T) {
+		t.Parallel()
+		assert := require.New(t)
+
+		L, err := s.lib.NewState()
+		assert.NoError(err)
+
+		t.Cleanup(L.Close)
+
+		testFunc(s, assert, L)
+	}
+}
+
+type funcWithT = func(*Suite, *require.Assertions, *testing.T)
+
+func (s *Suite) testWithT(testFunc funcWithT) func(t *testing.T) {
+	return func(t *testing.T) {
+		t.Parallel()
+		assert := require.New(t)
+
+		testFunc(s, assert, t)
+	}
+}
+
 func TestSuite(t *testing.T) {
 	t.Parallel()
 
@@ -48,23 +75,11 @@ func TestSuite(t *testing.T) {
 	tt := reflect.TypeOf(suite)
 	for i := range tt.NumMethod() {
 		method := tt.Method(i)
-		testFunc, ok := method.Func.Interface().(func(*Suite, *require.Assertions, *lua.State))
-		if !ok {
-			continue
+		if testFunc, ok := method.Func.Interface().(funcWithState); ok {
+			t.Run(strings.TrimPrefix(method.Name, "Test"), suite.testWithState(testFunc))
+		} else if testFunc, ok := method.Func.Interface().(funcWithT); ok {
+			t.Run(strings.TrimPrefix(method.Name, "Test"), suite.testWithT(testFunc))
 		}
-
-		t.Run(strings.TrimLeft(method.Name, "Test"), func(t *testing.T) {
-			t.Parallel()
-
-			assert := require.New(t)
-
-			L, err := suite.lib.NewState()
-			assert.NoError(err)
-
-			t.Cleanup(L.Close)
-
-			testFunc(suite, assert, L)
-		})
 	}
 }
 

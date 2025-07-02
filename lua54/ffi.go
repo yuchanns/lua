@@ -8,6 +8,8 @@ import (
 	"go.yuchanns.xyz/lua/internal/tools"
 )
 
+type LuaAlloc func(ud unsafe.Pointer, ptr unsafe.Pointer, osize, nsize int) unsafe.Pointer
+
 type LuaCFunction func(L unsafe.Pointer) int
 
 type LuaKFunction func(L unsafe.Pointer, status int, ctx int) int
@@ -17,8 +19,9 @@ type LuaWarnFunction func(ud unsafe.Pointer, msg *byte, tocont int)
 type ffi struct {
 	lib uintptr
 
-	LuaLNewstate func() unsafe.Pointer  `ffi:"luaL_newstate"`
-	LuaClose     func(L unsafe.Pointer) `ffi:"lua_close"`
+	// State manipulation
+	LuaNewstate func(f LuaAlloc, ud unsafe.Pointer) unsafe.Pointer `ffi:"lua_newstate"`
+	LuaClose    func(L unsafe.Pointer)                             `ffi:"lua_close"`
 
 	LuaPushcclousure func(L unsafe.Pointer, f LuaCFunction, n int)                                     `ffi:"lua_pushcclosure"`
 	LuaSetglobal     func(L unsafe.Pointer, name *byte)                                                `ffi:"lua_setglobal"`
@@ -34,6 +37,7 @@ type ffi struct {
 
 	LuaSetwarnf func(L unsafe.Pointer, warnf LuaWarnFunction, ud unsafe.Pointer) `ffi:"lua_setwarnf"`
 
+	LuaLNewstate func() unsafe.Pointer `ffi:"luaL_newstate"`
 	// Open all preloaded libraries.
 	LuaLOpenlibs     func(L unsafe.Pointer)                                    `ffi:"luaL_openlibs"`
 	LuaLChecknumber  func(L unsafe.Pointer, idx int) float64                   `ffi:"luaL_checknumber"`

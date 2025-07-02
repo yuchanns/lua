@@ -8,6 +8,10 @@ import (
 	"go.yuchanns.xyz/lua/internal/tools"
 )
 
+var NoOpKFunction LuaKFunction = func(_ unsafe.Pointer, _ int, _ int) int {
+	return 0
+}
+
 // PushGoFunction registers a Go function as a Lua C function.
 // Panics if the f is not a function or if it has unsupported argument/return types.
 func (s *State) PushGoFunction(f any) {
