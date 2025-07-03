@@ -27,17 +27,41 @@ type ffi struct {
 
 	LuaVersion func(L unsafe.Pointer) float64 `ffi:"lua_version"`
 
-	LuaPushcclousure func(L unsafe.Pointer, f LuaCFunction, n int)                                     `ffi:"lua_pushcclosure"`
-	LuaSetglobal     func(L unsafe.Pointer, name *byte)                                                `ffi:"lua_setglobal"`
-	LuaGettop        func(L unsafe.Pointer) int                                                        `ffi:"lua_gettop"`
-	LuaSettop        func(L unsafe.Pointer, idx int)                                                   `ffi:"lua_settop"`
-	LuaPushnumber    func(L unsafe.Pointer, n float64) int                                             `ffi:"lua_pushnumber"`
-	LuaPushinteger   func(L unsafe.Pointer, n int64) int                                               `ffi:"lua_pushinteger"`
-	LuaPushlstring   func(L unsafe.Pointer, s *byte, len int) int                                      `ffi:"lua_pushlstring"`
-	LuaPushboolean   func(L unsafe.Pointer, b int) int                                                 `ffi:"lua_pushboolean"`
-	LuaPcallk        func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx int, k LuaKFunction) int `ffi:"lua_pcallk"`
-	LuaTolstring     func(L unsafe.Pointer, idx int, size unsafe.Pointer) *byte                        `ffi:"lua_tolstring"`
-	LuaToboolean     func(L unsafe.Pointer, idx int) int                                               `ffi:"lua_toboolean"`
+	// Basic stack manipulation
+	LuaAbsindex   func(L unsafe.Pointer, idx int) int        `ffi:"lua_absindex"`
+	LuaGettop     func(L unsafe.Pointer) int                 `ffi:"lua_gettop"`
+	LuaSettop     func(L unsafe.Pointer, idx int)            `ffi:"lua_settop"`
+	LuaPushvalue  func(L unsafe.Pointer, idx int)            `ffi:"lua_pushvalue"`
+	LuaRotate     func(L unsafe.Pointer, idx, n int)         `ffi:"lua_rotate"`
+	LuaCopy       func(L unsafe.Pointer, fromidx, toidx int) `ffi:"lua_copy"`
+	LuaCheckstack func(L unsafe.Pointer, sz int) int         `ffi:"lua_checkstack"`
+	LuaXmove      func(from, to unsafe.Pointer, n int)       `ffi:"lua_xmove"`
+
+	// Access functions
+	LuaIsnumber    func(L unsafe.Pointer, idx int) int  `ffi:"lua_isnumber"`
+	LuaIsstring    func(L unsafe.Pointer, idx int) int  `ffi:"lua_isstring"`
+	LuaIscfunction func(L unsafe.Pointer, idx int) int  `ffi:"lua_iscfunction"`
+	LuaIsinteger   func(L unsafe.Pointer, idx int) int  `ffi:"lua_isinteger"`
+	LuaIsuserdata  func(L unsafe.Pointer, idx int) int  `ffi:"lua_isuserdata"`
+	LuaType        func(L unsafe.Pointer, idx int) int  `ffi:"lua_type"`
+	LuaTypename    func(L unsafe.Pointer, tp int) *byte `ffi:"lua_typename"`
+
+	LuaTonumberx  func(L unsafe.Pointer, idx int, isnum unsafe.Pointer) float64 `ffi:"lua_tonumberx"`
+	LuaTointegerx func(L unsafe.Pointer, idx int, isnum unsafe.Pointer) int64   `ffi:"lua_tointegerx"`
+	LuaTolstring  func(L unsafe.Pointer, idx int, size unsafe.Pointer) *byte    `ffi:"lua_tolstring"`
+	LuaToboolean  func(L unsafe.Pointer, idx int) int                           `ffi:"lua_toboolean"`
+
+	// Push functions
+	LuaPushnil       func(L unsafe.Pointer)                         `ffi:"lua_pushnil"`
+	LuaPushnumber    func(L unsafe.Pointer, n float64)              `ffi:"lua_pushnumber"`
+	LuaPushinteger   func(L unsafe.Pointer, n int64)                `ffi:"lua_pushinteger"`
+	LuaPushlstring   func(L unsafe.Pointer, s *byte, len int) *byte `ffi:"lua_pushlstring"`
+	LuaPushstring    func(L unsafe.Pointer, s *byte) *byte          `ffi:"lua_pushstring"`
+	LuaPushcclousure func(L unsafe.Pointer, f LuaCFunction, n int)  `ffi:"lua_pushcclosure"`
+	LuaPushboolean   func(L unsafe.Pointer, b int) int              `ffi:"lua_pushboolean"`
+
+	LuaSetglobal func(L unsafe.Pointer, name *byte)                                                `ffi:"lua_setglobal"`
+	LuaPcallk    func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx int, k LuaKFunction) int `ffi:"lua_pcallk"`
 
 	LuaSetwarnf func(L unsafe.Pointer, warnf LuaWarnFunction, ud unsafe.Pointer) `ffi:"lua_setwarnf"`
 
