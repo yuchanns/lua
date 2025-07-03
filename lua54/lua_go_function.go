@@ -19,11 +19,11 @@ func (s *State) PushGoFunction(f any) {
 	metadata := compileFuncMetadata(f, s.ffi)
 
 	// Create optimized LuaCFunction using pre-compiled metadata
-	var fn LuaCFunction = func(L unsafe.Pointer) int {
+	var fn CFunc = func(L *State) int {
 		// Fast argument conversion using pre-compiled converters
 		args := make([]reflect.Value, metadata.numArgs)
 		for i, converter := range metadata.argConverters {
-			args[i] = converter(s, L, i+1)
+			args[i] = converter(s, L.luaL, i+1)
 		}
 
 		// Call function with converted arguments
@@ -31,7 +31,7 @@ func (s *State) PushGoFunction(f any) {
 
 		// Fast result pushing using pre-compiled pushers
 		for i, pusher := range metadata.resultPushers {
-			pusher(s, L, results[i])
+			pusher(s, L.luaL, results[i])
 		}
 
 		return metadata.numResults

@@ -23,6 +23,10 @@ type ffi struct {
 	LuaNewstate func(f LuaAlloc, ud unsafe.Pointer) unsafe.Pointer `ffi:"lua_newstate"`
 	LuaClose    func(L unsafe.Pointer)                             `ffi:"lua_close"`
 
+	LuaAtpanic func(L unsafe.Pointer, panicf LuaCFunction) unsafe.Pointer `ffi:"lua_atpanic"`
+
+	LuaVersion func(L unsafe.Pointer) float64 `ffi:"lua_version"`
+
 	LuaPushcclousure func(L unsafe.Pointer, f LuaCFunction, n int)                                     `ffi:"lua_pushcclosure"`
 	LuaSetglobal     func(L unsafe.Pointer, name *byte)                                                `ffi:"lua_setglobal"`
 	LuaGettop        func(L unsafe.Pointer) int                                                        `ffi:"lua_gettop"`
@@ -45,6 +49,7 @@ type ffi struct {
 	LuaLChecklstring func(L unsafe.Pointer, idx int, len unsafe.Pointer) *byte `ffi:"luaL_checklstring"`
 	LuaLLoadstring   func(L unsafe.Pointer, s *byte) int                       `ffi:"luaL_loadstring"`
 	LuaLChecktype    func(L unsafe.Pointer, idx int, t int)                    `ffi:"luaL_checktype"`
+	LuaLError        func(L unsafe.Pointer, msg *byte) int                     `ffi:"luaL_error"`
 }
 
 func newFFI(path string) (FFI *ffi, err error) {

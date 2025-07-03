@@ -42,6 +42,28 @@ func (s *State) Close() {
 	s.luaL = nil
 }
 
+type CFunc func(*State) int
+
+func (s *State) AtPanic(fn CFunc) (old CFunc) {
+	panicf := func(L unsafe.Pointer) int {
+		state := &State{
+			ffi:  s.ffi,
+			luaL: L,
+		}
+		return fn(state)
+	}
+	oldptr := s.ffi.LuaAtpanic(s.luaL, panicf)
+	oldCfunc := *(*LuaCFunction)(unsafe.Pointer(&oldptr))
+	return func(state *State) int {
+		L := unsafe.Pointer(state)
+		return oldCfunc(L)
+	}
+}
+
+func (s *State) Version() float64 {
+	return s.ffi.LuaVersion(s.luaL)
+}
+
 func (s *State) PopError() (err error) {
 	msg := s.ToString(-1)
 	err = fmt.Errorf("%s", msg)
@@ -49,12 +71,26 @@ func (s *State) PopError() (err error) {
 	return
 }
 
+func (s *State) Errorf(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	b, _ := tools.BytePtrFromString(msg)
+	s.ffi.LuaLError(s.luaL, b)
+	return
+}
+
+// TODO: use State instead of unsafe.Pointer
 func (s *State) PushCClousure(f LuaCFunction, n int) {
 	s.ffi.LuaPushcclousure(s.luaL, f, n)
 }
 
-func (s *State) PushCFunction(f LuaCFunction) {
-	s.PushCClousure(f, 0)
+func (s *State) PushCFunction(f CFunc) {
+	s.PushCClousure(func(L unsafe.Pointer) int {
+		state := &State{
+			ffi:  s.ffi,
+			luaL: L,
+		}
+		return f(state)
+	}, 0)
 }
 
 func (s *State) ToString(idx int) string {
@@ -126,6 +162,7 @@ func (s *State) PCall(nargs, nresults, errfunc int) (err error) {
 	return
 }
 
+// TODO: use State instead of unsafe.Pointer
 func (s *State) SetWarnf(fn LuaWarnFunction, ud unsafe.Pointer) {
 	s.ffi.LuaSetwarnf(s.luaL, fn, ud)
 }
