@@ -78,33 +78,6 @@ func (s *State) Errorf(format string, args ...interface{}) {
 	return
 }
 
-// TODO: use State instead of unsafe.Pointer
-func (s *State) PushCClousure(f LuaCFunction, n int) {
-	s.ffi.LuaPushcclousure(s.luaL, f, n)
-}
-
-func (s *State) PushCFunction(f CFunc) {
-	s.PushCClousure(func(L unsafe.Pointer) int {
-		state := &State{
-			ffi:  s.ffi,
-			luaL: L,
-		}
-		return f(state)
-	}, 0)
-}
-
-func (s *State) ToString(idx int) string {
-	return s.ToLString(idx, nil)
-}
-
-func (s *State) ToLString(idx int, size unsafe.Pointer) string {
-	p := s.ffi.LuaTolstring(s.luaL, idx, size)
-	if p == nil {
-		return ""
-	}
-	return tools.BytePtrToString(p)
-}
-
 func (s *State) SetGlobal(name string) (err error) {
 	n, err := tools.BytePtrFromString(name)
 	if err != nil {
@@ -114,24 +87,8 @@ func (s *State) SetGlobal(name string) (err error) {
 	return
 }
 
-func (s *State) GetTop() int {
-	return s.ffi.LuaGettop(s.luaL)
-}
-
-func (s *State) SetTop(idx int) {
-	s.ffi.LuaSettop(s.luaL, idx)
-}
-
-func (s *State) Pop(n int) {
-	s.SetTop(-n - 1)
-}
-
 func (s *State) CheckNumber(idx int) float64 {
 	return s.ffi.LuaLChecknumber(s.luaL, idx)
-}
-
-func (s *State) PushNumber(n float64) {
-	s.ffi.LuaPushnumber(s.luaL, n)
 }
 
 func (s *State) DoString(scode string) (err error) {
