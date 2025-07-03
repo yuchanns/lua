@@ -27,10 +27,12 @@ type ffi struct {
 
 	LuaVersion func(L unsafe.Pointer) float64 `ffi:"lua_version"`
 
+	// Basic stack manipulation
+	LuaGettop func(L unsafe.Pointer) int      `ffi:"lua_gettop"`
+	LuaSettop func(L unsafe.Pointer, idx int) `ffi:"lua_settop"`
+
 	LuaPushcclousure func(L unsafe.Pointer, f LuaCFunction, n int)                                     `ffi:"lua_pushcclosure"`
 	LuaSetglobal     func(L unsafe.Pointer, name *byte)                                                `ffi:"lua_setglobal"`
-	LuaGettop        func(L unsafe.Pointer) int                                                        `ffi:"lua_gettop"`
-	LuaSettop        func(L unsafe.Pointer, idx int)                                                   `ffi:"lua_settop"`
 	LuaPushnumber    func(L unsafe.Pointer, n float64) int                                             `ffi:"lua_pushnumber"`
 	LuaPushinteger   func(L unsafe.Pointer, n int64) int                                               `ffi:"lua_pushinteger"`
 	LuaPushlstring   func(L unsafe.Pointer, s *byte, len int) int                                      `ffi:"lua_pushlstring"`
