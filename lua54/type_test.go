@@ -2,6 +2,7 @@ package lua_test
 
 import (
 	"fmt"
+	"math"
 	"unsafe"
 
 	"github.com/stretchr/testify/require"
@@ -176,4 +177,371 @@ func (s *Suite) TestFunction(assert *require.Assertions, L *lua.State) {
 	assert.NoError(L.SetGlobal("double_number"))
 
 	assert.NoError(L.DoString(`print_number(double_number(21))`))
+}
+
+func (s *Suite) TestCheckNumber(assert *require.Assertions, L *lua.State) {
+	// Test CheckNumber with valid number
+	L.PushNumber(42.5)
+	result := L.CheckNumber(-1)
+	assert.Equal(42.5, result)
+	L.Pop(1)
+
+	// Test CheckNumber with integer (should work as integers are numbers)
+	L.PushInteger(123)
+	result = L.CheckNumber(-1)
+	assert.Equal(123.0, result)
+	L.Pop(1)
+
+	// Test CheckNumber with string number (should work as Lua coerces)
+	L.PushString("456.7")
+	result = L.CheckNumber(-1)
+	assert.Equal(456.7, result)
+	L.Pop(1)
+
+	// Test CheckNumber with zero
+	L.PushNumber(0.0)
+	result = L.CheckNumber(-1)
+	assert.Equal(0.0, result)
+	L.Pop(1)
+
+	// Test CheckNumber with negative number
+	L.PushNumber(-123.45)
+	result = L.CheckNumber(-1)
+	assert.Equal(-123.45, result)
+	L.Pop(1)
+
+	// Note: CheckNumber should panic/error with non-numeric types
+	// but we can't easily test that in this test framework as it would
+	// cause the Lua state to error out and potentially terminate
+}
+
+func (s *Suite) TestCheckInteger(assert *require.Assertions, L *lua.State) {
+	// Test CheckInteger with valid integer
+	L.PushInteger(42)
+	result := L.CheckInteger(-1)
+	assert.Equal(int64(42), result)
+	L.Pop(1)
+
+	// Test CheckInteger with number that can be converted to integer
+	L.PushNumber(123.0)
+	result = L.CheckInteger(-1)
+	assert.Equal(int64(123), result)
+	L.Pop(1)
+
+	// Test CheckInteger with string integer (should work as Lua coerces)
+	L.PushString("456")
+	result = L.CheckInteger(-1)
+	assert.Equal(int64(456), result)
+	L.Pop(1)
+
+	// Test CheckInteger with zero
+	L.PushInteger(0)
+	result = L.CheckInteger(-1)
+	assert.Equal(int64(0), result)
+	L.Pop(1)
+
+	// Test CheckInteger with negative integer
+	L.PushInteger(-789)
+	result = L.CheckInteger(-1)
+	assert.Equal(int64(-789), result)
+	L.Pop(1)
+
+	// Test CheckInteger with large integer
+	L.PushInteger(math.MaxInt64) // max int64
+	result = L.CheckInteger(-1)
+	assert.Equal(int64(math.MaxInt64), result)
+	L.Pop(1)
+}
+
+func (s *Suite) TestCheckLString(assert *require.Assertions, L *lua.State) {
+	// Test CheckLString with valid string
+	testStr := "Hello, World!"
+	L.PushString(testStr)
+	size := len(testStr)
+	result := L.CheckLString(-1, size)
+	assert.Equal(testStr, result)
+	L.Pop(1)
+
+	// Test CheckLString with empty string
+	L.PushString("")
+	result = L.CheckLString(-1, 0)
+	assert.Equal("", result)
+	L.Pop(1)
+
+	// Test CheckLString with Unicode string
+	unicodeStr := "你好世界🌍"
+	L.PushString(unicodeStr)
+	size = len(unicodeStr) // byte length, not character length
+	result = L.CheckLString(-1, size)
+	assert.Equal(unicodeStr, result)
+	L.Pop(1)
+
+	// Test CheckLString with number (should be coerced to string)
+	L.PushNumber(42.5)
+	result = L.CheckLString(-1, 10) // approximate size
+	assert.Equal("42.5", result)
+	L.Pop(1)
+
+	// Test CheckLString with integer (should be coerced to string)
+	L.PushInteger(123)
+	result = L.CheckLString(-1, 10) // approximate size
+	assert.Equal("123", result)
+	L.Pop(1)
+}
+
+func (s *Suite) TestCheckType(assert *require.Assertions, L *lua.State) {
+	// Test CheckType with number
+	L.PushNumber(42.5)
+	// This should not panic/error as the type matches
+	L.CheckType(-1, lua.LUA_TNUMBER)
+	L.Pop(1)
+
+	// Test CheckType with string
+	L.PushString("test")
+	L.CheckType(-1, lua.LUA_TSTRING)
+	L.Pop(1)
+
+	// Test CheckType with boolean
+	L.PushBoolean(true)
+	L.CheckType(-1, lua.LUA_TBOOLEAN)
+	L.Pop(1)
+
+	// Test CheckType with nil
+	L.PushNil()
+	L.CheckType(-1, lua.LUA_TNIL)
+	L.Pop(1)
+
+	// Test CheckType with function
+	L.PushCFunction(func(L *lua.State) int { return 0 })
+	L.CheckType(-1, lua.LUA_TFUNCTION)
+	L.Pop(1)
+
+	// Note: CheckType should panic/error with wrong types
+	// but we can't easily test that in this test framework
+}
+
+func (s *Suite) TestCheckAny(assert *require.Assertions, L *lua.State) {
+	// Test CheckAny with number
+	L.PushNumber(42.5)
+	// This should not panic/error as there is a value
+	L.CheckAny(-1)
+	L.Pop(1)
+
+	// Test CheckAny with string
+	L.PushString("test")
+	L.CheckAny(-1)
+	L.Pop(1)
+
+	// Test CheckAny with boolean
+	L.PushBoolean(false)
+	L.CheckAny(-1)
+	L.Pop(1)
+
+	// Test CheckAny with nil
+	L.PushNil()
+	L.CheckAny(-1)
+	L.Pop(1)
+
+	// Test CheckAny with function
+	L.PushCFunction(func(L *lua.State) int { return 0 })
+	L.CheckAny(-1)
+	L.Pop(1)
+
+	L.AtPanic(func(L *lua.State) int {
+		err := L.PopError()
+		assert.Error(err)
+
+		panic(err)
+	})
+	// Test CheckAny with invalid index (should panic)
+	assert.Panics(func() {
+		L.CheckAny(1)
+	})
+}
+
+func (s *Suite) TestOptNumber(assert *require.Assertions, L *lua.State) {
+	// Test OptNumber with valid number
+	L.PushNumber(42.5)
+	result := L.OptNumber(-1, 100.0)
+	assert.Equal(42.5, result)
+	L.Pop(1)
+
+	// Test OptNumber with integer (should work as integers are numbers)
+	L.PushInteger(123)
+	result = L.OptNumber(-1, 100.0)
+	assert.Equal(123.0, result)
+	L.Pop(1)
+
+	// Test OptNumber with string number (should work as Lua coerces)
+	L.PushString("456.7")
+	result = L.OptNumber(-1, 100.0)
+	assert.Equal(456.7, result)
+	L.Pop(1)
+
+	// Test OptNumber with nil - should return default value
+	L.PushNil()
+	result = L.OptNumber(-1, 999.99)
+	assert.Equal(999.99, result)
+	L.Pop(1)
+
+	// Test OptNumber with zero
+	L.PushNumber(0.0)
+	result = L.OptNumber(-1, 100.0)
+	assert.Equal(0.0, result)
+	L.Pop(1)
+
+	// Test OptNumber with negative number
+	L.PushNumber(-123.45)
+	result = L.OptNumber(-1, 100.0)
+	assert.Equal(-123.45, result)
+	L.Pop(1)
+
+	// Test OptNumber with invalid index (beyond stack) - should return default
+	result = L.OptNumber(100, 777.77) // invalid index
+	assert.Equal(777.77, result)
+
+	// Test OptNumber with negative default
+	L.PushNil()
+	result = L.OptNumber(-1, -500.5)
+	assert.Equal(-500.5, result)
+	L.Pop(1)
+}
+
+func (s *Suite) TestOptInteger(assert *require.Assertions, L *lua.State) {
+	// Test OptInteger with valid integer
+	L.PushInteger(42)
+	result := L.OptInteger(-1, 100)
+	assert.Equal(int64(42), result)
+	L.Pop(1)
+
+	// Test OptInteger with exact floating point number (should work)
+	L.PushNumber(123.0)
+	result = L.OptInteger(-1, 100)
+	assert.Equal(int64(123), result)
+	L.Pop(1)
+
+	// Test OptInteger with string integer (should work as Lua coerces)
+	L.PushString("456")
+	result = L.OptInteger(-1, 100)
+	assert.Equal(int64(456), result)
+	L.Pop(1)
+
+	// Test OptInteger with nil - should return default value
+	L.PushNil()
+	result = L.OptInteger(-1, 999)
+	assert.Equal(int64(999), result)
+	L.Pop(1)
+
+	// Test OptInteger with zero
+	L.PushInteger(0)
+	result = L.OptInteger(-1, 100)
+	assert.Equal(int64(0), result)
+	L.Pop(1)
+
+	// Test OptInteger with negative integer
+	L.PushInteger(-789)
+	result = L.OptInteger(-1, 100)
+	assert.Equal(int64(-789), result)
+	L.Pop(1)
+
+	// Test OptInteger with large integer
+	L.PushInteger(math.MaxInt64) // max int64
+	result = L.OptInteger(-1, 100)
+	assert.Equal(int64(math.MaxInt64), result)
+	L.Pop(1)
+
+	// Test OptInteger with invalid index (beyond stack) - should return default
+	result = L.OptInteger(100, 777) // invalid index
+	assert.Equal(int64(777), result)
+
+	// Test OptInteger with negative default
+	L.PushNil()
+	result = L.OptInteger(-1, -500)
+	assert.Equal(int64(-500), result)
+	L.Pop(1)
+}
+
+func (s *Suite) TestOptLString(assert *require.Assertions, L *lua.State) {
+	// Test OptLString with valid string
+	testStr := "Hello, World!"
+	L.PushString(testStr)
+	var size int
+	result, err := L.OptLString(-1, "default", &size)
+	assert.NoError(err)
+	assert.Equal(testStr, result)
+	assert.Equal(len(testStr), size)
+	L.Pop(1)
+
+	// Test OptLString with empty string
+	L.PushString("")
+	result, err = L.OptLString(-1, "default", &size)
+	assert.NoError(err)
+	assert.Equal("", result)
+	assert.Equal(0, size)
+	L.Pop(1)
+
+	// Test OptLString with Unicode string
+	unicodeStr := "你好世界🌍"
+	L.PushString(unicodeStr)
+	result, err = L.OptLString(-1, "default", &size)
+	assert.NoError(err)
+	assert.Equal(unicodeStr, result)
+	assert.Equal(len(unicodeStr), size) // byte length
+	L.Pop(1)
+
+	// Test OptLString with number (should be coerced to string)
+	L.PushNumber(42.5)
+	result, err = L.OptLString(-1, "default", &size)
+	assert.NoError(err)
+	assert.Equal("42.5", result)
+	assert.True(size > 0)
+	L.Pop(1)
+
+	// Test OptLString with integer (should be coerced to string)
+	L.PushInteger(123)
+	result, err = L.OptLString(-1, "default", &size)
+	assert.NoError(err)
+	assert.Equal("123", result)
+	assert.Equal(3, size)
+	L.Pop(1)
+
+	// Test OptLString with nil - should return default value
+	L.PushNil()
+	defaultStr := "this is default"
+	result, err = L.OptLString(-1, defaultStr, &size)
+	assert.NoError(err)
+	assert.Equal(defaultStr, result)
+	assert.Equal(len(defaultStr), size)
+	L.Pop(1)
+
+	// Test OptLString with invalid index (beyond stack) - should return default
+	defaultStr2 := "another default"
+	result, err = L.OptLString(100, defaultStr2, &size) // invalid index
+	assert.NoError(err)
+	assert.Equal(defaultStr2, result)
+	assert.Equal(len(defaultStr2), size)
+
+	// Test OptLString with nil size pointer
+	L.PushString("test")
+	result, err = L.OptLString(-1, "default", nil)
+	assert.NoError(err)
+	assert.Equal("test", result)
+	L.Pop(1)
+
+	// Test OptLString with empty default
+	L.PushNil()
+	result, err = L.OptLString(-1, "", &size)
+	assert.NoError(err)
+	assert.Equal("", result)
+	assert.Equal(0, size)
+	L.Pop(1)
+
+	// Test OptLString with long strings
+	longStr := "This is a very long string that contains many characters and should test the string handling properly in the Lua to Go conversion"
+	L.PushString(longStr)
+	result, err = L.OptLString(-1, "default", &size)
+	assert.NoError(err)
+	assert.Equal(longStr, result)
+	assert.Equal(len(longStr), size)
+	L.Pop(1)
 }

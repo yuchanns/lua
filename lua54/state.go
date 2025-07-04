@@ -87,10 +87,6 @@ func (s *State) SetGlobal(name string) (err error) {
 	return
 }
 
-func (s *State) CheckNumber(idx int) float64 {
-	return s.ffi.LuaLChecknumber(s.luaL, idx)
-}
-
 func (s *State) DoString(scode string) (err error) {
 	err = s.LoadString(scode)
 	if err != nil {

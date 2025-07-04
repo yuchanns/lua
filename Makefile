@@ -31,7 +31,7 @@ endif
 # Common compiler settings
 CC = gcc
 BASE_CFLAGS = -O2 -Wall -Wextra -fPIC $(PLATFORM_CFLAGS)
-BASE_LDFLAGS = $(LIB_FLAGS)
+BASE_LDFLAGS = $(LIB_FLAGS) -lm
 
 # =============================================================================
 # COMMON LUA BUILD FUNCTIONS
@@ -87,8 +87,8 @@ $$(LUA$(1)_INCLUDE_DIR)/%.h: $$(LUA$(1)_SRC)/%.h
 	@cp $$< $$@
 
 # Build Lua $(1) dynamic library
-.PHONY: tests-$(1)
-tests-$(1): setup-dirs-$(1) $$(LUA$(1)_LIB) $$(LUA$(1)_HEADER_TARGETS)
+.PHONY: lua$(1)
+lua$(1): setup-dirs-$(1) $$(LUA$(1)_LIB) $$(LUA$(1)_HEADER_TARGETS)
 
 # Link Lua $(1) library
 $$(LUA$(1)_LIB): $$(LUA$(1)_CORE_OBJS)
@@ -120,7 +120,7 @@ $(eval $(call define_lua_build_rules,54))
 .PHONY: all clean help
 
 # Default target
-all: tests-54
+all: lua54
 
 # Global clean target
 clean: clean-54
@@ -129,7 +129,7 @@ clean: clean-54
 # Help target
 help:
 	@echo "Available targets:"
-	@echo "  tests-54    - Build Lua 5.4 dynamic library for testing"
+	@echo "  lua54    - Build Lua 5.4 dynamic library for testing"
 	@echo "  clean       - Remove build artifacts and .lua directory"
 	@echo "  help        - Show this help message"
 

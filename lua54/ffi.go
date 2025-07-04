@@ -48,7 +48,7 @@ type ffi struct {
 
 	LuaTonumberx   func(L unsafe.Pointer, idx int, isnum unsafe.Pointer) float64 `ffi:"lua_tonumberx"`
 	LuaTointegerx  func(L unsafe.Pointer, idx int, isnum unsafe.Pointer) int64   `ffi:"lua_tointegerx"`
-	LuaTolstring   func(L unsafe.Pointer, idx int, size unsafe.Pointer) *byte    `ffi:"lua_tolstring"`
+	LuaTolstring   func(L unsafe.Pointer, idx int, sz unsafe.Pointer) *byte      `ffi:"lua_tolstring"`
 	LuaToboolean   func(L unsafe.Pointer, idx int) int                           `ffi:"lua_toboolean"`
 	LuaRawlen      func(L unsafe.Pointer, idx int) int                           `ffi:"lua_rawlen"`
 	LuaTocfunction func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_tocfunction"`
@@ -71,13 +71,22 @@ type ffi struct {
 
 	LuaLNewstate func() unsafe.Pointer `ffi:"luaL_newstate"`
 	// Open all preloaded libraries.
-	LuaLOpenlibs     func(L unsafe.Pointer)                                    `ffi:"luaL_openlibs"`
-	LuaLChecknumber  func(L unsafe.Pointer, idx int) float64                   `ffi:"luaL_checknumber"`
-	LuaLCheckinteger func(L unsafe.Pointer, idx int) int64                     `ffi:"luaL_checkinteger"`
-	LuaLChecklstring func(L unsafe.Pointer, idx int, len unsafe.Pointer) *byte `ffi:"luaL_checklstring"`
-	LuaLLoadstring   func(L unsafe.Pointer, s *byte) int                       `ffi:"luaL_loadstring"`
-	LuaLChecktype    func(L unsafe.Pointer, idx int, t int)                    `ffi:"luaL_checktype"`
-	LuaLError        func(L unsafe.Pointer, msg *byte) int                     `ffi:"luaL_error"`
+	LuaLOpenlibs func(L unsafe.Pointer) `ffi:"luaL_openlibs"`
+
+	// Auxiliary functions
+	LuaLChecknumber  func(L unsafe.Pointer, idx int) float64                             `ffi:"luaL_checknumber"`
+	LuaLCheckinteger func(L unsafe.Pointer, idx int) int64                               `ffi:"luaL_checkinteger"`
+	LuaLChecklstring func(L unsafe.Pointer, idx int, sz unsafe.Pointer) *byte            `ffi:"luaL_checklstring"`
+	LuaLChecktype    func(L unsafe.Pointer, idx int, t int)                              `ffi:"luaL_checktype"`
+	LuaLCheckany     func(L unsafe.Pointer, idx int)                                     `ffi:"luaL_checkany"`
+	LuaLOptnumber    func(L unsafe.Pointer, idx int, def float64) float64                `ffi:"luaL_optnumber"`
+	LuaLOptinteger   func(L unsafe.Pointer, idx int, def int64) int64                    `ffi:"luaL_optinteger"`
+	LuaLOptlstring   func(L unsafe.Pointer, idx int, def *byte, sz unsafe.Pointer) *byte `ffi:"luaL_optlstring"`
+	LuaLCheckstack   func(L unsafe.Pointer, sz int, msg *byte) int                       `ffi:"luaL_checkstack"`
+	LuaLTolstring    func(L unsafe.Pointer, idx int, sz unsafe.Pointer) *byte            `ffi:"luaL_tolstring"`
+
+	LuaLError      func(L unsafe.Pointer, msg *byte) int `ffi:"luaL_error"`
+	LuaLLoadstring func(L unsafe.Pointer, s *byte) int   `ffi:"luaL_loadstring"`
 }
 
 func newFFI(path string) (FFI *ffi, err error) {
