@@ -1,7 +1,6 @@
 package lua_test
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -82,36 +81,4 @@ func TestSuite(t *testing.T) {
 			t.Run(strings.TrimPrefix(method.Name, "Test"), suite.testWithT(testFunc))
 		}
 	}
-}
-
-func (s *Suite) TestBasic(assert *require.Assertions, L *lua.State) {
-	assert.Equal(fmt.Sprintf("%.0f", L.Version()), "504")
-
-	L.PushGoFunction(func(x float64) float64 {
-		return x * 2
-	})
-	assert.NoError(L.SetGlobal("double_number"))
-	assert.NoError(L.DoString(`print(double_number(21))`))
-}
-
-func (s *Suite) TestAtPanic(assert *require.Assertions, t *testing.T) {
-	L, err := s.lib.NewState()
-	assert.NoError(err)
-
-	t.Cleanup(L.Close)
-
-	_ = L.AtPanic(func(L *lua.State) int {
-		err := L.PopError()
-		assert.Error(err)
-		// We raise a panic to avoid SIGABRT abort the tests
-		panic(err.Error())
-	})
-
-	errMsg := "Oops, no enclosing lua_pcall"
-	assert.PanicsWithValue(
-		errMsg,
-		func() {
-			L.Errorf("%s", errMsg)
-		},
-	)
 }

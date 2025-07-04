@@ -1,6 +1,8 @@
 package lua
 
 import (
+	"fmt"
+	"reflect"
 	"unsafe"
 
 	"go.yuchanns.xyz/lua/internal/tools"
@@ -86,9 +88,14 @@ func (s *State) PushString(sv string) (ret *byte, err error) {
 	return
 }
 
-// TODO: use State instead of unsafe.Pointer
-func (s *State) PushCClousure(f LuaCFunction, n int) {
-	s.ffi.LuaPushcclousure(s.luaL, f, n)
+func (s *State) PushCClousure(f CFunc, n int) {
+	s.ffi.LuaPushcclousure(s.luaL, func(L unsafe.Pointer) int {
+		state := &State{
+			ffi:  s.ffi,
+			luaL: L,
+		}
+		return f(state)
+	}, n)
 }
 
 func (s *State) PushBoolean(b bool) int {
@@ -99,12 +106,22 @@ func (s *State) PushBoolean(b bool) int {
 	return s.ffi.LuaPushboolean(s.luaL, v)
 }
 
-func (s *State) PushCFunction(f CFunc) {
-	s.PushCClousure(func(L unsafe.Pointer) int {
-		state := &State{
-			ffi:  s.ffi,
-			luaL: L,
+func (s *State) PushLightUserData(ud any) (err error) {
+	var p unsafe.Pointer
+	switch v := ud.(type) {
+	case unsafe.Pointer:
+		p = v
+	default:
+		val := reflect.ValueOf(ud)
+		if val.Kind() != reflect.Ptr {
+			return fmt.Errorf("PushLightUserData: expected a pointer, got %T", ud)
 		}
-		return f(state)
-	}, 0)
+		p = unsafe.Pointer(val.Pointer())
+	}
+	s.ffi.LuaPushlightuserdata(s.luaL, p)
+	return
+}
+
+func (s *State) PushCFunction(f CFunc) {
+	s.PushCClousure(f, 0)
 }

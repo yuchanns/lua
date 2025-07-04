@@ -393,3 +393,20 @@ func (s *Suite) TestStackComplexOperations(assert *require.Assertions, L *lua.St
 	assert.Equal(int64(4), L.ToInteger(4))
 	assert.Equal(int64(5), L.ToInteger(5))
 }
+
+func (s *Suite) TestAtPanic(assert *require.Assertions, L *lua.State) {
+	_ = L.AtPanic(func(L *lua.State) int {
+		err := L.PopError()
+		assert.Error(err)
+		// We raise a panic to avoid SIGABRT abort the tests
+		panic(err.Error())
+	})
+
+	errMsg := "Oops, no enclosing lua_pcall"
+	assert.PanicsWithValue(
+		errMsg,
+		func() {
+			L.Errorf("%s", errMsg)
+		},
+	)
+}

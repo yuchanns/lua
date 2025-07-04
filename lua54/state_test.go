@@ -9,7 +9,7 @@ import (
 	"go.yuchanns.xyz/lua/lua54"
 )
 
-func (s *Suite) TestTrackingAlloc(assert *require.Assertions, t *testing.T) {
+func (s *Suite) TestAllocTracking(assert *require.Assertions, t *testing.T) {
 	arena := tools.NewArena()
 	t.Cleanup(arena.FreeAll)
 
@@ -21,12 +21,16 @@ func (s *Suite) TestTrackingAlloc(assert *require.Assertions, t *testing.T) {
 	err = L.DoString(`local t = {}; for i=1,1000 do t[i] = i end`)
 	assert.NoError(err)
 
+	assert.NotZero(arena.TotalAllocated())
+	assert.NotZero(arena.PeakMemory())
+	assert.NotZero(arena.AllocCount())
+
 	t.Logf("Total Allocated Memory: %d bytes", arena.TotalAllocated())
 	t.Logf("Peak Memory Usage: %d bytes", arena.PeakMemory())
 	t.Logf("Allocation Count: %d", arena.AllocCount())
 }
 
-func (s *Suite) TestLimitedAlloc(assert *require.Assertions, t *testing.T) {
+func (s *Suite) TestAllocLimited(assert *require.Assertions, t *testing.T) {
 	arena := tools.NewArena()
 	t.Cleanup(arena.FreeAll)
 
