@@ -30,7 +30,7 @@ jobs:
           VER="${VERSION//./}"
           echo "version=${VER}" >> $GITHUB_OUTPUT
       - name: Build Lua dynamic library
-        run: make tests-${{ steps.module.outputs.version }}
+        run: make lua${{ steps.module.outputs.version }}
         shell: bash
       - uses: actions/setup-go@v5
         with:

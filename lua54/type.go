@@ -78,8 +78,8 @@ func (s *State) ToIntegerx(idx int, isnum bool) int64 {
 	return s.ffi.LuaTointegerx(s.luaL, idx, unsafe.Pointer(&isNumber))
 }
 
-func (s *State) ToLString(idx int, size unsafe.Pointer) string {
-	p := s.ffi.LuaTolstring(s.luaL, idx, size)
+func (s *State) ToLString(idx int, size *int) string {
+	p := s.ffi.LuaTolstring(s.luaL, idx, unsafe.Pointer(size))
 	if p == nil {
 		return ""
 	}
@@ -112,4 +112,45 @@ func (s *State) ToCFunction(idx int) unsafe.Pointer {
 
 func (s *State) ToRawLen(idx int) int {
 	return s.ffi.LuaRawlen(s.luaL, idx)
+}
+
+func (s *State) CheckNumber(idx int) float64 {
+	return s.ffi.LuaLChecknumber(s.luaL, idx)
+}
+
+func (s *State) CheckInteger(idx int) int64 {
+	return s.ffi.LuaLCheckinteger(s.luaL, idx)
+}
+
+func (s *State) CheckLString(idx int, size int) string {
+	p := s.ffi.LuaLChecklstring(s.luaL, idx, unsafe.Pointer(&size))
+	if p == nil {
+		return ""
+	}
+	return tools.BytePtrToString(p)
+}
+
+func (s *State) CheckType(idx int, tp int) {
+	s.ffi.LuaLChecktype(s.luaL, idx, tp)
+}
+
+func (s *State) CheckAny(idx int) {
+	s.ffi.LuaLCheckany(s.luaL, idx)
+}
+
+func (s *State) OptNumber(idx int, def float64) float64 {
+	return s.ffi.LuaLOptnumber(s.luaL, idx, def)
+}
+
+func (s *State) OptInteger(idx int, def int64) int64 {
+	return s.ffi.LuaLOptinteger(s.luaL, idx, def)
+}
+
+func (s *State) OptLString(idx int, def string, size *int) (string, error) {
+	d, err := tools.BytePtrFromString(def)
+	if err != nil {
+		return "", err
+	}
+	p := s.ffi.LuaLOptlstring(s.luaL, idx, d, unsafe.Pointer(size))
+	return tools.BytePtrToString(p), nil
 }

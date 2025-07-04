@@ -80,7 +80,7 @@ func main() {
 ### Run Tests
 
 ```bash
-make tests-54
+make lua54
 
 cd lua54 && go test -v .
 ```

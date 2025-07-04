@@ -19,26 +19,10 @@ func BytePtrFromString(s string) (*byte, error) {
 		return new(byte), nil
 	}
 
-	// Check cache first
-	cacheMutex.RLock()
-	if cached, exists := stringCache[s]; exists {
-		cacheMutex.RUnlock()
-		return cached, nil
-	}
-	cacheMutex.RUnlock()
-
-	// Not in cache, create new
 	ptr, err := unix.BytePtrFromString(s)
 	if err != nil {
 		return nil, err
 	}
-
-	// Cache the result for common strings (limit cache size to prevent memory leaks)
-	cacheMutex.Lock()
-	if len(stringCache) < 1000 { // Reasonable cache size limit
-		stringCache[s] = ptr
-	}
-	cacheMutex.Unlock()
 
 	return ptr, nil
 }
