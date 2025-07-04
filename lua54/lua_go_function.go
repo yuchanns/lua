@@ -8,7 +8,7 @@ import (
 	"go.yuchanns.xyz/lua/internal/tools"
 )
 
-var NoOpKFunction LuaKFunction = func(_ unsafe.Pointer, _ int, _ int) int {
+var noOpKFunction LuaKFunction = func(_ unsafe.Pointer, _ int, _ int) int {
 	return 0
 }
 

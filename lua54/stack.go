@@ -88,9 +88,14 @@ func (s *State) PushString(sv string) (ret *byte, err error) {
 	return
 }
 
-// TODO: use State instead of unsafe.Pointer
-func (s *State) PushCClousure(f LuaCFunction, n int) {
-	s.ffi.LuaPushcclousure(s.luaL, f, n)
+func (s *State) PushCClousure(f CFunc, n int) {
+	s.ffi.LuaPushcclousure(s.luaL, func(L unsafe.Pointer) int {
+		state := &State{
+			ffi:  s.ffi,
+			luaL: L,
+		}
+		return f(state)
+	}, n)
 }
 
 func (s *State) PushBoolean(b bool) int {
@@ -118,11 +123,5 @@ func (s *State) PushLightUserData(ud any) (err error) {
 }
 
 func (s *State) PushCFunction(f CFunc) {
-	s.PushCClousure(func(L unsafe.Pointer) int {
-		state := &State{
-			ffi:  s.ffi,
-			luaL: L,
-		}
-		return f(state)
-	}, 0)
+	s.PushCClousure(f, 0)
 }

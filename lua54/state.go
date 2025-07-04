@@ -42,7 +42,7 @@ func (s *State) Close() {
 	s.luaL = nil
 }
 
-type CFunc func(*State) int
+type CFunc func(L *State) int
 
 func (s *State) AtPanic(fn CFunc) (old CFunc) {
 	panicf := func(L unsafe.Pointer) int {
@@ -112,14 +112,21 @@ func (s *State) LoadString(scode string) (err error) {
 }
 
 func (s *State) PCall(nargs, nresults, errfunc int) (err error) {
-	status := s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, 0, NoOpKFunction)
+	status := s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, 0, noOpKFunction)
 	if status != LUA_OK {
 		err = s.PopError()
 	}
 	return
 }
 
-// TODO: use State instead of unsafe.Pointer
-func (s *State) SetWarnf(fn LuaWarnFunction, ud unsafe.Pointer) {
-	s.ffi.LuaSetwarnf(s.luaL, fn, ud)
+type WarnFunc func(L *State, msg string, tocont int)
+
+func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
+	s.ffi.LuaSetwarnf(s.luaL, func(ud unsafe.Pointer, msg *byte, tocont int) {
+		state := &State{
+			ffi:  s.ffi,
+			luaL: ud,
+		}
+		fn(state, tools.BytePtrToString(msg), tocont)
+	}, ud)
 }
