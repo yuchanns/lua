@@ -58,6 +58,10 @@ func (s *State) IsNoneOrNil(idx int) bool {
 	return s.Type(idx) <= 0
 }
 
+func (s *State) IsLightUserData(idx int) bool {
+	return s.Type(idx) == LUA_TLIGHTUSERDATA
+}
+
 func (s *State) ToNumberx(idx int, isnum bool) float64 {
 	var isNumber int
 	if isnum {
@@ -96,4 +100,8 @@ func (s *State) ToInteger(idx int) int64 {
 
 func (s *State) ToString(idx int) string {
 	return s.ToLString(idx, nil)
+}
+
+func (s *State) ToUserData(idx int) unsafe.Pointer {
+	return s.ffi.LuaTouserdata(s.luaL, idx)
 }

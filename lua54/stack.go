@@ -1,6 +1,8 @@
 package lua
 
 import (
+	"fmt"
+	"reflect"
 	"unsafe"
 
 	"go.yuchanns.xyz/lua/internal/tools"
@@ -97,6 +99,22 @@ func (s *State) PushBoolean(b bool) int {
 		v = 1
 	}
 	return s.ffi.LuaPushboolean(s.luaL, v)
+}
+
+func (s *State) PushLightUserData(ud any) (err error) {
+	var p unsafe.Pointer
+	switch v := ud.(type) {
+	case unsafe.Pointer:
+		p = v
+	default:
+		val := reflect.ValueOf(ud)
+		if val.Kind() != reflect.Ptr {
+			return fmt.Errorf("PushLightUserData: expected a pointer, got %T", ud)
+		}
+		p = unsafe.Pointer(val.Pointer())
+	}
+	s.ffi.LuaPushlightuserdata(s.luaL, p)
+	return
 }
 
 func (s *State) PushCFunction(f CFunc) {
