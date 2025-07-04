@@ -46,11 +46,13 @@ type ffi struct {
 	LuaType        func(L unsafe.Pointer, idx int) int  `ffi:"lua_type"`
 	LuaTypename    func(L unsafe.Pointer, tp int) *byte `ffi:"lua_typename"`
 
-	LuaTonumberx  func(L unsafe.Pointer, idx int, isnum unsafe.Pointer) float64 `ffi:"lua_tonumberx"`
-	LuaTointegerx func(L unsafe.Pointer, idx int, isnum unsafe.Pointer) int64   `ffi:"lua_tointegerx"`
-	LuaTolstring  func(L unsafe.Pointer, idx int, size unsafe.Pointer) *byte    `ffi:"lua_tolstring"`
-	LuaToboolean  func(L unsafe.Pointer, idx int) int                           `ffi:"lua_toboolean"`
-	LuaTouserdata func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_touserdata"`
+	LuaTonumberx   func(L unsafe.Pointer, idx int, isnum unsafe.Pointer) float64 `ffi:"lua_tonumberx"`
+	LuaTointegerx  func(L unsafe.Pointer, idx int, isnum unsafe.Pointer) int64   `ffi:"lua_tointegerx"`
+	LuaTolstring   func(L unsafe.Pointer, idx int, size unsafe.Pointer) *byte    `ffi:"lua_tolstring"`
+	LuaToboolean   func(L unsafe.Pointer, idx int) int                           `ffi:"lua_toboolean"`
+	LuaRawlen      func(L unsafe.Pointer, idx int) int                           `ffi:"lua_rawlen"`
+	LuaTocfunction func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_tocfunction"`
+	LuaTouserdata  func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_touserdata"`
 
 	// Push functions
 	LuaPushnil           func(L unsafe.Pointer)                         `ffi:"lua_pushnil"`

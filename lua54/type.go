@@ -105,3 +105,11 @@ func (s *State) ToString(idx int) string {
 func (s *State) ToUserData(idx int) unsafe.Pointer {
 	return s.ffi.LuaTouserdata(s.luaL, idx)
 }
+
+func (s *State) ToCFunction(idx int) unsafe.Pointer {
+	return s.ffi.LuaTocfunction(s.luaL, idx)
+}
+
+func (s *State) ToRawLen(idx int) int {
+	return s.ffi.LuaRawlen(s.luaL, idx)
+}
