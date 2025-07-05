@@ -8,6 +8,8 @@ import (
 	"go.yuchanns.xyz/lua/internal/tools"
 )
 
+type LuaReader func(L unsafe.Pointer, ud unsafe.Pointer, sz *int) *byte
+
 type LuaAlloc func(ud unsafe.Pointer, ptr unsafe.Pointer, osize, nsize int) unsafe.Pointer
 
 type LuaCFunction func(L unsafe.Pointer) int
@@ -64,8 +66,9 @@ type ffi struct {
 	LuaPushboolean       func(L unsafe.Pointer, b int) int              `ffi:"lua_pushboolean"`
 	LuaPushlightuserdata func(L unsafe.Pointer, p unsafe.Pointer)       `ffi:"lua_pushlightuserdata"`
 
-	LuaSetglobal func(L unsafe.Pointer, name *byte)                                                `ffi:"lua_setglobal"`
-	LuaPcallk    func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx int, k LuaKFunction) int `ffi:"lua_pcallk"`
+	LuaSetglobal func(L unsafe.Pointer, name *byte)                                                           `ffi:"lua_setglobal"`
+	LuaPcallk    func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx int, k LuaKFunction) int            `ffi:"lua_pcallk"`
+	LuaLoad      func(L unsafe.Pointer, reader LuaReader, dt unsafe.Pointer, chunkname *byte, mode *byte) int `ffi:"lua_load"`
 
 	LuaSetwarnf func(L unsafe.Pointer, warnf LuaWarnFunction, ud unsafe.Pointer) `ffi:"lua_setwarnf"`
 
@@ -85,8 +88,10 @@ type ffi struct {
 	LuaLCheckstack   func(L unsafe.Pointer, sz int, msg *byte) int                       `ffi:"luaL_checkstack"`
 	LuaLTolstring    func(L unsafe.Pointer, idx int, sz unsafe.Pointer) *byte            `ffi:"luaL_tolstring"`
 
-	LuaLError      func(L unsafe.Pointer, msg *byte) int `ffi:"luaL_error"`
-	LuaLLoadstring func(L unsafe.Pointer, s *byte) int   `ffi:"luaL_loadstring"`
+	LuaLError       func(L unsafe.Pointer, msg *byte) int                                  `ffi:"luaL_error"`
+	LuaLLoadstring  func(L unsafe.Pointer, s *byte) int                                    `ffi:"luaL_loadstring"`
+	LuaLLoadfilex   func(L unsafe.Pointer, filename *byte, mode *byte) int                 `ffi:"luaL_loadfilex"`
+	LuaLLoadbufferx func(L unsafe.Pointer, buff *byte, sz int, name *byte, mode *byte) int `ffi:"luaL_loadbufferx"`
 }
 
 func newFFI(path string) (FFI *ffi, err error) {

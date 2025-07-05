@@ -106,6 +106,9 @@ func (s *State) PushBoolean(b bool) int {
 	return s.ffi.LuaPushboolean(s.luaL, v)
 }
 
+// PushLightUserData pushes a light user data onto the stack.
+// UNSAFE: The user data must be a pointer type, and it is the caller's responsibility to ensure
+// that the pointer remains valid for the lifetime of the Lua state.
 func (s *State) PushLightUserData(ud any) (err error) {
 	var p unsafe.Pointer
 	switch v := ud.(type) {
