@@ -416,3 +416,96 @@ func (s *Suite) TestPCall(assert *require.Assertions, L *lua.State) {
 
 	L.Pop(1) // Pop error handler
 }
+
+// Test Call method
+func (s *Suite) TestCall(assert *require.Assertions, L *lua.State) {
+	// Test Call with successful function execution
+	err := L.LoadString("return 42")
+	assert.NoError(err)
+
+	L.Call(0, 1)
+	assert.True(L.IsNumber(-1))
+	assert.Equal(42.0, L.ToNumber(-1))
+	L.Pop(1)
+
+	// Test Call with multiple arguments and returns
+	err = L.LoadString("return function(a, b, c) return a + b, a * b, c end")
+	assert.NoError(err)
+	L.Call(0, 1) // Load the function
+	
+	// Push arguments
+	L.PushNumber(10)
+	L.PushNumber(20)
+	L.PushString("test")
+
+	// Call function with 3 args, expecting 3 returns
+	L.Call(3, 3)
+
+	// Check results (stack order: bottom to top)
+	assert.Equal(30.0, L.ToNumber(-3))   // a + b
+	assert.Equal(200.0, L.ToNumber(-2))  // a * b
+	assert.Equal("test", L.ToString(-1)) // c
+	L.Pop(3)
+
+	// Test Call with LUA_MULTRET
+	err = L.LoadString("return 1, 2, 3, 4, 5")
+	assert.NoError(err)
+
+	L.Call(0, lua.LUA_MULTRET)
+
+	// Should have 5 values on stack
+	for i := 1; i <= 5; i++ {
+		assert.Equal(float64(i), L.ToNumber(-6+i))
+	}
+	L.Pop(5)
+
+	// Test Call with 0 returns
+	L.PushGoFunction(func(msg string) {
+		assert.Equal("hello", msg)
+	})
+	L.SetGlobal("asserteq")
+	err = L.LoadString("asserteq('hello')")
+	assert.NoError(err)
+
+	L.Call(0, 0)
+	// No values should be left on stack
+
+	// Test Call with nested function calls
+	err = L.LoadString(`
+		return function(x)
+			local function double(n) return n * 2 end
+			local function add_ten(n) return n + 10 end
+			return add_ten(double(x))
+		end
+	`)
+	assert.NoError(err)
+	L.Call(0, 1) // Load the function
+
+	L.PushNumber(5)
+	L.Call(1, 1) // Call with 5, should return (5*2)+10 = 20
+	assert.Equal(20.0, L.ToNumber(-1))
+	L.Pop(1)
+
+	// Test Call with table operations
+	err = L.LoadString(`
+		return function()
+			local t = {a = 1, b = 2, c = 3}
+			local sum = 0
+			for k, v in pairs(t) do
+				sum = sum + v
+			end
+			return sum, #t
+		end
+	`)
+	assert.NoError(err)
+	L.Call(0, 1) // Load the function
+
+	L.Call(0, 2) // Should return sum=6 and length=0 (hash table has no array part)
+	assert.Equal(6.0, L.ToNumber(-2))  // sum
+	assert.Equal(0.0, L.ToNumber(-1))  // length of hash table
+	L.Pop(2)
+
+	// Note: We cannot test Call with runtime errors because Call will panic
+	// instead of returning an error. That's the main difference from PCall.
+	// Any runtime error in Call would cause the test to fail with panic.
+}
