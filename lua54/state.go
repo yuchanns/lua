@@ -2,6 +2,7 @@ package lua
 
 import (
 	"fmt"
+	"io"
 	"unsafe"
 
 	"go.yuchanns.xyz/lua/internal/tools"
@@ -16,11 +17,17 @@ type State struct {
 	ffi *ffi
 
 	luaL unsafe.Pointer
+
+	// SAFETY: refAlloc holds a reference to the allocator's user data
+	// to prevent garbage collection while the Lua state is active.
+	refAlloc unsafe.Pointer
 }
 
 func newState(ffi *ffi, o *stateOpt) (state *State) {
 	var L unsafe.Pointer
+	var refAlloc unsafe.Pointer
 	if o != nil {
+		refAlloc = o.userData
 		L = ffi.LuaNewstate(o.alloc, o.userData)
 	} else {
 		L = ffi.LuaLNewstate()
@@ -30,6 +37,8 @@ func newState(ffi *ffi, o *stateOpt) (state *State) {
 	return &State{
 		ffi:  ffi,
 		luaL: L,
+
+		refAlloc: refAlloc,
 	}
 }
 
@@ -40,6 +49,7 @@ func (s *State) Close() {
 
 	s.ffi.LuaClose(s.luaL)
 	s.luaL = nil
+	s.refAlloc = nil
 }
 
 type CFunc func(L *State) int
@@ -71,7 +81,7 @@ func (s *State) PopError() (err error) {
 	return
 }
 
-func (s *State) Errorf(format string, args ...interface{}) {
+func (s *State) Errorf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 	b, _ := tools.BytePtrFromString(msg)
 	s.ffi.LuaLError(s.luaL, b)
@@ -87,12 +97,81 @@ func (s *State) SetGlobal(name string) (err error) {
 	return
 }
 
+// Load loads a Lua chunk without running it.
+func (s *State) Load(r io.Reader, chunkname string, mode ...string) (err error) {
+	cname, err := tools.BytePtrFromString(chunkname)
+	if err != nil {
+		return
+	}
+	var m *byte
+	if len(mode) > 0 {
+		m, err = tools.BytePtrFromString(mode[0])
+		if err != nil {
+			return
+		}
+	}
+
+	buf := make([]byte, 4096)
+	var reader LuaReader = func(_ unsafe.Pointer, ud unsafe.Pointer, sz *int) *byte {
+		reader := *(*io.Reader)(ud)
+		n, err := reader.Read(buf)
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return nil
+		}
+		if n == 0 {
+			return nil
+		}
+		*sz = n
+		return &buf[0]
+	}
+
+	// SAFETY: it is safe to pass the reader as an unsafe.Pointer because
+	// the reader immediately consumes the data from the io.Reader after
+	// the call to LuaLoad. So it will not outlive the io.Reader.
+	status := s.ffi.LuaLoad(s.luaL, reader, unsafe.Pointer(&r), cname, m)
+	if status != LUA_OK {
+		err = s.PopError()
+	}
+	return
+}
+
+func (s *State) LoadBuffer(buff []byte, name string) (err error) {
+	return s.LoadBufferx(buff, name)
+}
+
+func (s *State) LoadBufferx(buff []byte, name string, mode ...string) (err error) {
+	b, err := tools.BytePtrFromString(name)
+	if err != nil {
+		return
+	}
+	var m *byte
+	if len(mode) > 0 {
+		m, err = tools.BytePtrFromString(mode[0])
+		if err != nil {
+			return
+		}
+	}
+	var bf *byte
+	var sz = len(buff)
+	if sz > 0 {
+		bf = &buff[0]
+	}
+	status := s.ffi.LuaLLoadbufferx(s.luaL, bf, sz, b, m)
+	if status != LUA_OK {
+		err = s.PopError()
+	}
+	return
+}
+
 func (s *State) DoString(scode string) (err error) {
 	err = s.LoadString(scode)
 	if err != nil {
 		return
 	}
-	return s.PCall(0, 0, 0)
+	return s.PCall(0, LUA_MULTRET, 0)
 }
 
 func (s *State) LoadString(scode string) (err error) {
@@ -105,6 +184,37 @@ func (s *State) LoadString(scode string) (err error) {
 		err = s.PopError()
 	}
 	return
+}
+
+func (s *State) DoFile(filename string) (err error) {
+	err = s.LoadFile(filename)
+	if err != nil {
+		return
+	}
+	return s.PCall(0, LUA_MULTRET, 0)
+}
+
+func (s *State) LoadFilex(filename string, mode ...string) (err error) {
+	fname, err := tools.BytePtrFromString(filename)
+	if err != nil {
+		return
+	}
+	var m *byte
+	if len(mode) > 0 {
+		m, err = tools.BytePtrFromString(mode[0])
+		if err != nil {
+			return
+		}
+	}
+	status := s.ffi.LuaLLoadfilex(s.luaL, fname, m)
+	if status != LUA_OK {
+		err = s.PopError()
+	}
+	return
+}
+
+func (s *State) LoadFile(filename string) (err error) {
+	return s.LoadFilex(filename)
 }
 
 func (s *State) PCall(nargs, nresults, errfunc int) (err error) {

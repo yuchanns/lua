@@ -15,6 +15,9 @@ const (
 	LUA_TPROTO         = 9
 )
 
+// Option for multiple returns in `PCall` and `Call`
+const LUA_MULTRET = -1
+
 const (
 	// thread status
 	LUA_OK        = 0

@@ -9,10 +9,16 @@ import (
 	"go.yuchanns.xyz/lua/lua54"
 )
 
+type testObject struct {
+	data [1024]byte
+	id   int
+}
+
 func (s *Suite) TestTypeLightUserData(assert *require.Assertions, L *lua.State) {
 	// Test pushing light user data
-	var testVar int = 42
-	err := L.PushLightUserData(&testVar)
+	var testVar = &testObject{id: 123}
+	testVar.data[0] = 42
+	err := L.PushLightUserData(testVar)
 	assert.NoError(err)
 
 	// Verify the type is correct
@@ -28,9 +34,9 @@ func (s *Suite) TestTypeLightUserData(assert *require.Assertions, L *lua.State) 
 	assert.NotNil(ptr)
 
 	// Convert back to the original pointer and verify the value
-	retrievedPtr := (*int)(ptr)
-	assert.Equal(42, *retrievedPtr)
-	assert.Equal(&testVar, retrievedPtr)
+	retrievedPtr := (*testObject)(ptr)
+	assert.Equal(byte(42), retrievedPtr.data[0])
+	assert.Equal(123, retrievedPtr.id)
 
 	// Test with unsafe.Pointer directly
 	L.Pop(1) // Remove the previous value

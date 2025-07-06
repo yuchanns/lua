@@ -54,6 +54,9 @@ func (l *Lib) NewState(o ...stateOptFunc) (state *State, err error) {
 
 type stateOptFunc func(o *stateOpt)
 
+// WithAlloc sets a custom memory allocation function for the Lua state.
+// SAFETY: It is guaranteed that the user data pointer will be valid
+// during the lifetime of the Lua state.
 func WithAlloc[T any](
 	fn func(ud *T, ptr unsafe.Pointer, osize, nsize int) unsafe.Pointer,
 	ud *T,
