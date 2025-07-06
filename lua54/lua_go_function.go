@@ -8,7 +8,7 @@ import (
 	"go.yuchanns.xyz/lua/internal/tools"
 )
 
-var noOpKFunction LuaKFunction = func(_ unsafe.Pointer, _ int, _ int) int {
+var NoOpKFunction LuaKFunction = func(_ unsafe.Pointer, _ int, _ int) int {
 	return 0
 }
 
@@ -142,12 +142,12 @@ func compileFuncMetadata(f any, ffi *ffi) *funcMetadata {
 	}
 
 	// Pre-compile argument converters
-	for i := 0; i < numArgs; i++ {
+	for i := range numArgs {
 		metadata.argConverters[i] = createArgConverter(t.In(i), ffi)
 	}
 
 	// Pre-compile result pushers
-	for i := 0; i < numResults; i++ {
+	for i := range numResults {
 		metadata.resultPushers[i] = createResultPusher(t.Out(i), ffi)
 	}
 

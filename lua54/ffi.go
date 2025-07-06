@@ -67,6 +67,7 @@ type ffi struct {
 	LuaPushlightuserdata func(L unsafe.Pointer, p unsafe.Pointer)       `ffi:"lua_pushlightuserdata"`
 
 	LuaSetglobal func(L unsafe.Pointer, name *byte)                                                           `ffi:"lua_setglobal"`
+	LuaCallk     func(L unsafe.Pointer, nargs, nresults int, ctx int, k LuaKFunction)                         `ffi:"lua_callk"`
 	LuaPcallk    func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx int, k LuaKFunction) int            `ffi:"lua_pcallk"`
 	LuaLoad      func(L unsafe.Pointer, reader LuaReader, dt unsafe.Pointer, chunkname *byte, mode *byte) int `ffi:"lua_load"`
 

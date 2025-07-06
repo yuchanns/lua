@@ -218,11 +218,23 @@ func (s *State) LoadFile(filename string) (err error) {
 }
 
 func (s *State) PCall(nargs, nresults, errfunc int) (err error) {
-	status := s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, 0, noOpKFunction)
+	return s.PCallK(nargs, nresults, errfunc, 0, NoOpKFunction)
+}
+
+func (s *State) PCallK(nargs, nresults, errfunc int, ctx int, k LuaKFunction) (err error) {
+	status := s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, k)
 	if status != LUA_OK {
 		err = s.PopError()
 	}
 	return
+}
+
+func (s *State) Call(nargs, nresults int) {
+	s.CallK(nargs, nresults, 0, NoOpKFunction)
+}
+
+func (s *State) CallK(nargs, nresults, ctx int, k LuaKFunction) {
+	s.ffi.LuaCallk(s.luaL, nargs, nresults, ctx, k)
 }
 
 type WarnFunc func(L *State, msg string, tocont int)

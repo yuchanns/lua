@@ -29,6 +29,14 @@ jobs:
           VERSION="${{ matrix.version }}"
           VER="${VERSION//./}"
           echo "version=${VER}" >> $GITHUB_OUTPUT
+      - name: Cache Lua dynamic library
+        uses: actions/cache@v4
+        with:
+          path: |
+            lua${{ steps.module.outputs.version }}/.lua
+          key: lua-${{ matrix.os }}-${{ matrix.version }}-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            lua-${{ matrix.os }}-${{ matrix.version }}-
       - name: Build Lua dynamic library
         run: make lua${{ steps.module.outputs.version }}
         shell: bash
