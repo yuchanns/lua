@@ -331,3 +331,88 @@ func (s *Suite) TestLoadFile(assert *require.Assertions, L *lua.State) {
 	assert.Equal("Hello from file!", L.ToString(-1))
 	L.Pop(1)
 }
+
+// Test PCall method
+func (s *Suite) TestPCall(assert *require.Assertions, L *lua.State) {
+	// Test PCall with successful function execution
+	err := L.LoadString("return 42")
+	assert.NoError(err)
+
+	err = L.PCall(0, 1, 0)
+	assert.NoError(err)
+	assert.True(L.IsNumber(-1))
+	assert.Equal(42.0, L.ToNumber(-1))
+	L.Pop(1)
+
+	// Test PCall with multiple arguments and returns
+	err = L.LoadString("return function(a, b, c) return a + b, a * b, c end")
+	assert.NoError(err)
+	err = L.PCall(0, 1, 0) // Load the function
+	assert.NoError(err)
+
+	// Push arguments
+	L.PushNumber(10)
+	L.PushNumber(20)
+	L.PushString("test")
+
+	// Call function with 3 args, expecting 3 returns
+	err = L.PCall(3, 3, 0)
+	assert.NoError(err)
+
+	// Check results (stack order: bottom to top)
+	assert.Equal(30.0, L.ToNumber(-3))   // a + b
+	assert.Equal(200.0, L.ToNumber(-2))  // a * b
+	assert.Equal("test", L.ToString(-1)) // c
+	L.Pop(3)
+
+	// Test PCall with runtime error
+	err = L.LoadString("error('test error')")
+	assert.NoError(err)
+
+	err = L.PCall(0, 0, 0)
+	assert.Error(err)
+
+	// Test PCall with LUA_MULTRET
+	err = L.LoadString("return 1, 2, 3, 4, 5")
+	assert.NoError(err)
+
+	err = L.PCall(0, lua.LUA_MULTRET, 0)
+	assert.NoError(err)
+
+	// Should have 5 values on stack
+	for i := 1; i <= 5; i++ {
+		assert.Equal(float64(i), L.ToNumber(-6+i))
+	}
+	L.Pop(5)
+
+	// Test PCall with 0 returns
+	L.PushGoFunction(func(msg string) {
+		assert.Equal("hello", msg)
+	})
+	L.SetGlobal("asserteq")
+	err = L.LoadString("asserteq('hello')")
+	assert.NoError(err)
+
+	err = L.PCall(0, 0, 0)
+	assert.NoError(err)
+	// No values should be left on stack
+
+	// Test PCall with error handler function
+	// First push error handler
+	err = L.LoadString("return function(err) return 'Handled: ' .. tostring(err) end")
+	assert.NoError(err)
+	err = L.PCall(0, 1, 0)
+	assert.NoError(err)
+
+	errHandlerIdx := L.GetTop()
+
+	// Push function that will error
+	err = L.LoadString("error('original error')")
+	assert.NoError(err)
+
+	// Call with error handler
+	err = L.PCall(0, 1, errHandlerIdx)
+	assert.Error(err)
+
+	L.Pop(1) // Pop error handler
+}
