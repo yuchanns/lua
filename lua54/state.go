@@ -17,11 +17,17 @@ type State struct {
 	ffi *ffi
 
 	luaL unsafe.Pointer
+
+	// SAFETY: refAlloc holds a reference to the allocator's user data
+	// to prevent garbage collection while the Lua state is active.
+	refAlloc unsafe.Pointer
 }
 
 func newState(ffi *ffi, o *stateOpt) (state *State) {
 	var L unsafe.Pointer
+	var refAlloc unsafe.Pointer
 	if o != nil {
+		refAlloc = o.userData
 		L = ffi.LuaNewstate(o.alloc, o.userData)
 	} else {
 		L = ffi.LuaLNewstate()
@@ -31,6 +37,8 @@ func newState(ffi *ffi, o *stateOpt) (state *State) {
 	return &State{
 		ffi:  ffi,
 		luaL: L,
+
+		refAlloc: refAlloc,
 	}
 }
 
@@ -41,6 +49,7 @@ func (s *State) Close() {
 
 	s.ffi.LuaClose(s.luaL)
 	s.luaL = nil
+	s.refAlloc = nil
 }
 
 type CFunc func(L *State) int
