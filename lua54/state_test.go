@@ -432,7 +432,7 @@ func (s *Suite) TestCall(assert *require.Assertions, L *lua.State) {
 	err = L.LoadString("return function(a, b, c) return a + b, a * b, c end")
 	assert.NoError(err)
 	L.Call(0, 1) // Load the function
-	
+
 	// Push arguments
 	L.PushNumber(10)
 	L.PushNumber(20)
@@ -500,12 +500,45 @@ func (s *Suite) TestCall(assert *require.Assertions, L *lua.State) {
 	assert.NoError(err)
 	L.Call(0, 1) // Load the function
 
-	L.Call(0, 2) // Should return sum=6 and length=0 (hash table has no array part)
-	assert.Equal(6.0, L.ToNumber(-2))  // sum
-	assert.Equal(0.0, L.ToNumber(-1))  // length of hash table
+	L.Call(0, 2)                      // Should return sum=6 and length=0 (hash table has no array part)
+	assert.Equal(6.0, L.ToNumber(-2)) // sum
+	assert.Equal(0.0, L.ToNumber(-1)) // length of hash table
 	L.Pop(2)
 
-	// Note: We cannot test Call with runtime errors because Call will panic
-	// instead of returning an error. That's the main difference from PCall.
-	// Any runtime error in Call would cause the test to fail with panic.
+	// Test Call with runtime error using AtPanic
+	// Set up panic handler that converts Lua panic to Go panic
+	old := L.AtPanic(func(L *lua.State) int {
+		msg := L.ToString(-1)
+		panic(msg)
+	})
+
+	// Test that Call panics on runtime error
+	assert.Panics(func() {
+		err := L.LoadString("error('test runtime error')")
+		assert.NoError(err)
+		L.Call(0, 0) // This should panic due to the runtime error
+	})
+
+	// Test that Call panics on nil function call
+	assert.Panics(func() {
+		err := L.LoadString("local f = nil; f()")
+		assert.NoError(err)
+		L.Call(0, 0) // This should panic due to attempting to call nil
+	})
+
+	// Test that Call panics on division by zero (in some contexts)
+	assert.Panics(func() {
+		err := L.LoadString("error('division by zero')")
+		assert.NoError(err)
+		L.Call(0, 0) // This should panic
+	})
+
+	// Restore the old panic handler
+	L.AtPanic(old)
+
+	err = L.LoadString("return 'normal execution'")
+	assert.NoError(err)
+	L.Call(0, 1)
+	assert.Equal("normal execution", L.ToString(-1))
+	L.Pop(1)
 }

@@ -216,9 +216,16 @@ func (s *Suite) TestCheckNumber(assert *require.Assertions, L *lua.State) {
 	assert.Equal(-123.45, result)
 	L.Pop(1)
 
-	// Note: CheckNumber should panic/error with non-numeric types
-	// but we can't easily test that in this test framework as it would
-	// cause the Lua state to error out and potentially terminate
+	L.AtPanic(func(L *lua.State) int {
+		err := L.PopError()
+		assert.Error(err)
+
+		panic(err)
+	})
+	L.PushString("not a number")
+	assert.Panics(func() {
+		L.CheckNumber(-1)
+	})
 }
 
 func (s *Suite) TestCheckInteger(assert *require.Assertions, L *lua.State) {
@@ -322,8 +329,18 @@ func (s *Suite) TestCheckType(assert *require.Assertions, L *lua.State) {
 	L.CheckType(-1, lua.LUA_TFUNCTION)
 	L.Pop(1)
 
-	// Note: CheckType should panic/error with wrong types
-	// but we can't easily test that in this test framework
+	L.AtPanic(func(L *lua.State) int {
+		err := L.PopError()
+		assert.Error(err)
+
+		panic(err)
+	})
+
+	// Test CheckType with invalid type (should panic)
+	L.PushNumber(42.5)
+	assert.Panics(func() {
+		L.CheckType(-1, lua.LUA_TSTRING) // expecting string but got number
+	})
 }
 
 func (s *Suite) TestCheckAny(assert *require.Assertions, L *lua.State) {

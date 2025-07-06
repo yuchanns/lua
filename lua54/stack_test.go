@@ -110,7 +110,7 @@ func (s *Suite) TestStackCheckStack(assert *require.Assertions, L *lua.State) {
 	assert.True(L.CheckStack(1000))
 
 	// Fill up some stack space
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		L.PushInteger(int64(i))
 	}
 
