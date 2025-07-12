@@ -1,8 +1,6 @@
 package lua
 
 import (
-	"fmt"
-	"reflect"
 	"unsafe"
 
 	"go.yuchanns.xyz/lua/internal/tools"
@@ -106,20 +104,13 @@ func (s *State) PushBoolean(b bool) int {
 	return s.ffi.LuaPushboolean(s.luaL, v)
 }
 
-// PushLightUserData pushes a light user data onto the stack.
-// UNSAFE: The user data must be a pointer type, and it is the caller's responsibility to ensure
+// PushLightUserData pushes a light userdata onto the stack.
+// UNSAFE: The userdata must be a pointer type, and it is the caller's responsibility to ensure
 // that the pointer remains valid for the lifetime of the Lua state.
 func (s *State) PushLightUserData(ud any) (err error) {
-	var p unsafe.Pointer
-	switch v := ud.(type) {
-	case unsafe.Pointer:
-		p = v
-	default:
-		val := reflect.ValueOf(ud)
-		if val.Kind() != reflect.Ptr {
-			return fmt.Errorf("PushLightUserData: expected a pointer, got %T", ud)
-		}
-		p = unsafe.Pointer(val.Pointer())
+	p, err := tools.ToLightUserData(ud)
+	if err != nil {
+		return
 	}
 	s.ffi.LuaPushlightuserdata(s.luaL, p)
 	return
