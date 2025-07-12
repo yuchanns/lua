@@ -45,3 +45,47 @@ func (s *State) SetI(idx int, n int64) {
 func (s *State) NewTable() {
 	s.ffi.LuaCreatetable(s.luaL, 0, 0)
 }
+
+func (s *State) RawGet(idx int) int {
+	return s.ffi.LuaRawget(s.luaL, idx)
+}
+
+func (s *State) RawSet(idx int) {
+	s.ffi.LuaRawset(s.luaL, idx)
+}
+
+func (s *State) RawGetI(idx int, n int64) int {
+	return s.ffi.LuaRawgeti(s.luaL, idx, n)
+}
+
+func (s *State) RawSetI(idx int, n int64) {
+	s.ffi.LuaRawseti(s.luaL, idx, n)
+}
+
+// RawGetP retrieves a value from the stack at the given index using a light userdata pointer.
+// UNSAFE: It is the caller's responsibility to ensure that the pointer remains valid for the
+// lifetime of the Lua state.
+func (s *State) RawGetP(idx int, ud any) (typ int, err error) {
+	p, err := tools.ToLightUserData(ud)
+	if err != nil {
+		return
+	}
+	typ = s.ffi.LuaRawgetp(s.luaL, idx, p)
+	return
+}
+
+// RawSetP sets a value at the given index using a light userdata pointer.
+// UNSAFE: It is the caller's responsibility to ensure that the pointer remains valid for the
+// lifetime of the Lua state.
+func (s *State) RawSetP(idx int, ud any) (err error) {
+	p, err := tools.ToLightUserData(ud)
+	if err != nil {
+		return
+	}
+	s.ffi.LuaRawsetp(s.luaL, idx, p)
+	return
+}
+
+func (s *State) Next(idx int) bool {
+	return s.ffi.LuaNext(s.luaL, idx) != 0
+}
