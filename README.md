@@ -61,8 +61,10 @@ func main() {
 	}
 
 	// Call a Go function from Lua
-	L.PushGoFunction(func(x float64) float64 {
-		return x * 2
+	L.PushCFunction(func(L *lua.State) int {
+		x := L.CheckNumber(1)
+		L.PushNumber(x * 2)
+		return 1
 	})
 	if err := L.SetGlobal("double_number"); err != nil {
 		fmt.Println("Error:", err)
