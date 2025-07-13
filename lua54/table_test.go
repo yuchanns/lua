@@ -455,3 +455,70 @@ func (s *Suite) TestTableNext(assert *require.Assertions, L *lua.State) {
 	L.Pop(4)
 	assert.Equal(0, L.GetTop())
 }
+
+func (s *Suite) TestTableMeta(assert *require.Assertions, L *lua.State) {
+	L.NewTable()
+	tblIdx := L.GetTop()
+	L.NewTable()
+	mtIdx := L.GetTop()
+
+	L.PushString("__call")
+	L.PushCFunction(func(L *lua.State) int {
+		L.PushString("called")
+		return 1
+	})
+	L.SetTable(mtIdx)
+
+	L.SetMetaTable(tblIdx)
+	L.PushValue(tblIdx)
+	assert.Equal(1, L.GetMetaTable(-1))
+	assert.Equal(lua.LUA_TTABLE, L.Type(-1))
+	L.Pop(2)
+
+	assert.Equal(1, L.GetMetaTable(tblIdx))
+	typ, err := L.LGetMetaField(tblIdx, "__call")
+	assert.NoError(err)
+	assert.Equal(lua.LUA_TFUNCTION, typ)
+
+	has, err := L.LCallMeta(tblIdx, "__call")
+	assert.NoError(err)
+	assert.True(has)
+	assert.Equal(lua.LUA_TSTRING, L.Type(-1))
+	assert.Equal("called", L.ToString(-1))
+
+	L.SetTop(tblIdx)
+
+	has, err = L.LNewMetaTable("mt")
+	assert.NoError(err)
+	assert.False(has)
+	L.Pop(1)
+
+	has, err = L.LNewMetaTable("mt")
+	assert.NoError(err)
+	assert.True(has)
+	L.PushString("__call")
+	L.PushCFunction(func(L *lua.State) int {
+		L.PushString("mt called")
+		return 1
+	})
+	L.SetTable(-3)
+	L.SetTop(tblIdx)
+
+	assert.NoError(L.LSetMetaTable("mt"))
+	typ, err = L.LGetMetaField(tblIdx, "__call")
+	assert.NoError(err)
+	assert.Equal(lua.LUA_TFUNCTION, typ)
+
+	typ, err = L.LGetMetaTable("mt")
+	assert.NoError(err)
+	assert.Equal(lua.LUA_TTABLE, typ)
+	typ, err = L.LGetMetaTable("non_existent")
+	assert.NoError(err)
+	assert.Equal(lua.LUA_TNIL, typ)
+
+	has, err = L.LCallMeta(tblIdx, "__call")
+	assert.NoError(err)
+	assert.True(has)
+	assert.Equal(lua.LUA_TSTRING, L.Type(-1))
+	assert.Equal("mt called", L.ToString(-1))
+}

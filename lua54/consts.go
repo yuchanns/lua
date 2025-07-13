@@ -18,6 +18,11 @@ const (
 // Option for multiple returns in `PCall` and `Call`
 const LUA_MULTRET = -1
 
+// Pseudo-indices
+const (
+	LUA_REGISTRYINDEX = (-LUAI_MAXSTACK - 1000)
+)
+
 const (
 	// thread status
 	LUA_OK        = 0
@@ -27,3 +32,5 @@ const (
 	LUA_ERRMEM    = 4
 	LUA_ERRERR    = 5
 )
+
+const LUAI_MAXSTACK = 1000000

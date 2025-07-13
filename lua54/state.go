@@ -248,3 +248,7 @@ func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 		fn(state, tools.BytePtrToString(msg), tocont)
 	}, ud)
 }
+
+var NoOpKFunction LuaKFunction = func(_ unsafe.Pointer, _ int, _ int) int {
+	return 0
+}

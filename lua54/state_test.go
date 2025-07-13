@@ -341,8 +341,9 @@ func (s *Suite) TestPCall(assert *require.Assertions, L *lua.State) {
 	}
 	L.Pop(5)
 
-	L.PushGoFunction(func(msg string) {
-		assert.Equal("hello", msg)
+	L.PushCFunction(func(L *lua.State) int {
+		assert.Equal("hello", L.ToString(1))
+		return 0
 	})
 	L.SetGlobal("asserteq")
 	err = L.LoadString("asserteq('hello')")
@@ -402,8 +403,9 @@ func (s *Suite) TestCall(assert *require.Assertions, L *lua.State) {
 	}
 	L.Pop(5)
 
-	L.PushGoFunction(func(msg string) {
-		assert.Equal("hello", msg)
+	L.PushCFunction(func(L *lua.State) int {
+		assert.Equal("hello", L.ToString(1))
+		return 0
 	})
 	L.SetGlobal("asserteq")
 	err = L.LoadString("asserteq('hello')")
