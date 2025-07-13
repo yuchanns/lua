@@ -155,8 +155,10 @@ func (s *Suite) TestFunction(assert *require.Assertions, L *lua.State) {
 	})
 	assert.NoError(L.SetGlobal("print_number"))
 
-	L.PushGoFunction(func(x float64) float64 {
-		return x * 2
+	L.PushCFunction(func(L *lua.State) int {
+		x := L.CheckNumber(1)
+		L.PushNumber(x * 2)
+		return 1
 	})
 	assert.NoError(L.SetGlobal("double_number"))
 

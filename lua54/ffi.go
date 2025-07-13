@@ -82,6 +82,9 @@ type ffi struct {
 	LuaRawgetp func(L unsafe.Pointer, idx int, p unsafe.Pointer) int `ffi:"lua_rawgetp"`
 	LuaRawsetp func(L unsafe.Pointer, idx int, p unsafe.Pointer)     `ffi:"lua_rawsetp"`
 	LuaNext    func(L unsafe.Pointer, idx int) int                   `ffi:"lua_next"`
+	// Meta table functions
+	LuaGetmetatable func(L unsafe.Pointer, objindex int) int `ffi:"lua_getmetatable"`
+	LuaSetmetatable func(L unsafe.Pointer, objindex int) int `ffi:"lua_setmetatable"`
 
 	LuaSetglobal func(L unsafe.Pointer, name *byte)                                                           `ffi:"lua_setglobal"`
 	LuaCallk     func(L unsafe.Pointer, nargs, nresults int, ctx int, k LuaKFunction)                         `ffi:"lua_callk"`
@@ -93,6 +96,11 @@ type ffi struct {
 	LuaLNewstate func() unsafe.Pointer `ffi:"luaL_newstate"`
 	// Open all preloaded libraries.
 	LuaLOpenlibs func(L unsafe.Pointer) `ffi:"luaL_openlibs"`
+
+	LuaLNewmetatable func(L unsafe.Pointer, tname *byte) int       `ffi:"luaL_newmetatable"`
+	LuaLSetmetatable func(L unsafe.Pointer, tname *byte)           `ffi:"luaL_setmetatable"`
+	LuaLCallmeta     func(L unsafe.Pointer, ojbj int, e *byte) int `ffi:"luaL_callmeta"`
+	LuaLGetmetafield func(L unsafe.Pointer, obj int, e *byte) int  `ffi:"luaL_getmetafield"`
 
 	// Auxiliary functions
 	LuaLChecknumber  func(L unsafe.Pointer, idx int) float64                             `ffi:"luaL_checknumber"`
