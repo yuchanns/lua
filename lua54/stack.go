@@ -6,6 +6,26 @@ import (
 	"go.yuchanns.xyz/lua/internal/tools"
 )
 
+func (s *State) RawEqual(idx1, idx2 int) bool {
+	return s.ffi.LuaRawequal(s.luaL, idx1, idx2) != 0
+}
+
+func (s *State) Compare(idx1, idx2, op int) bool {
+	return s.ffi.LuaCompare(s.luaL, idx1, idx2, op) != 0
+}
+
+func (s *State) Arith(op int) {
+	s.ffi.LuaArith(s.luaL, op)
+}
+
+func (s *State) Concat(n int) {
+	s.ffi.LuaConcat(s.luaL, n)
+}
+
+func (s *State) Len(idx int) {
+	s.ffi.LuaLen(s.luaL, idx)
+}
+
 func (s *State) AbsIndex(idx int) int {
 	return s.ffi.LuaAbsindex(s.luaL, idx)
 }

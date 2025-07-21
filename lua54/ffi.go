@@ -52,9 +52,15 @@ type ffi struct {
 	LuaTointegerx  func(L unsafe.Pointer, idx int, isnum unsafe.Pointer) int64   `ffi:"lua_tointegerx"`
 	LuaTolstring   func(L unsafe.Pointer, idx int, sz unsafe.Pointer) *byte      `ffi:"lua_tolstring"`
 	LuaToboolean   func(L unsafe.Pointer, idx int) int                           `ffi:"lua_toboolean"`
-	LuaRawlen      func(L unsafe.Pointer, idx int) int                           `ffi:"lua_rawlen"`
+	LuaRawlen      func(L unsafe.Pointer, idx int) uint                          `ffi:"lua_rawlen"`
 	LuaTocfunction func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_tocfunction"`
 	LuaTouserdata  func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_touserdata"`
+
+	LuaRawequal func(L unsafe.Pointer, idx1 int, idx2 int) int         `ffi:"lua_rawequal"`
+	LuaCompare  func(L unsafe.Pointer, idx1 int, idx2 int, op int) int `ffi:"lua_compare"`
+	LuaArith    func(L unsafe.Pointer, op int)                         `ffi:"lua_arith"`
+	LuaConcat   func(L unsafe.Pointer, n int)                          `ffi:"lua_concat"`
+	LuaLen      func(L unsafe.Pointer, idx int)                        `ffi:"lua_len"`
 
 	// Push functions
 	LuaPushnil           func(L unsafe.Pointer)                         `ffi:"lua_pushnil"`

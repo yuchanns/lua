@@ -2,7 +2,7 @@ package lua_test
 
 import (
 	"github.com/stretchr/testify/require"
-	lua "go.yuchanns.xyz/lua/lua54"
+	"go.yuchanns.xyz/lua/lua54"
 )
 
 func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {

@@ -110,7 +110,7 @@ func (s *State) ToCFunction(idx int) unsafe.Pointer {
 	return s.ffi.LuaTocfunction(s.luaL, idx)
 }
 
-func (s *State) ToRawLen(idx int) int {
+func (s *State) RawLen(idx int) uint {
 	return s.ffi.LuaRawlen(s.luaL, idx)
 }
 

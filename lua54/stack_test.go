@@ -348,3 +348,178 @@ func (s *Suite) TestAtPanic(assert *require.Assertions, L *lua.State) {
 		},
 	)
 }
+
+func (s *Suite) TestStackRawEqual(assert *require.Assertions, L *lua.State) {
+	L.PushInteger(123)
+	L.PushInteger(123)
+	assert.True(L.RawEqual(-1, -2))
+
+	L.PushInteger(456)
+	assert.False(L.RawEqual(-1, -2))
+
+	L.SetTop(0)
+
+	L.PushString("abc")
+	L.PushString("abc")
+	assert.True(L.RawEqual(-1, -2))
+
+	L.PushString("def")
+	assert.False(L.RawEqual(-1, -2))
+
+	L.SetTop(0)
+
+	L.PushBoolean(true)
+	L.PushBoolean(true)
+	assert.True(L.RawEqual(-1, -2))
+
+	L.PushBoolean(false)
+	assert.False(L.RawEqual(-1, -2))
+
+	L.SetTop(0)
+
+	L.PushNil()
+	L.PushNil()
+	assert.True(L.RawEqual(-1, -2))
+
+	L.PushInteger(0)
+	assert.False(L.RawEqual(-1, -2))
+}
+
+func (s *Suite) TestStackCompare(assert *require.Assertions, L *lua.State) {
+	L.PushInteger(10)
+	L.PushInteger(10)
+	assert.True(L.Compare(-1, -2, lua.LUA_OPEQ))
+	assert.False(L.Compare(-1, -2, lua.LUA_OPLT))
+	assert.True(L.Compare(-1, -2, lua.LUA_OPLE))
+
+	L.PushInteger(20)
+	assert.False(L.Compare(-1, -2, lua.LUA_OPLT))
+	assert.True(L.Compare(-2, -1, lua.LUA_OPLT))
+
+	L.SetTop(0)
+
+	L.PushString("foo")
+	L.PushString("foo")
+	assert.True(L.Compare(-1, -2, lua.LUA_OPEQ))
+
+	L.PushString("zzz")
+	assert.False(L.Compare(-1, -2, lua.LUA_OPLT))
+	assert.True(L.Compare(-2, -1, lua.LUA_OPLT))
+
+	L.SetTop(0)
+
+	L.PushBoolean(true)
+	L.PushBoolean(true)
+	assert.True(L.Compare(-1, -2, lua.LUA_OPEQ))
+
+	L.PushBoolean(false)
+	assert.False(L.Compare(-1, -2, lua.LUA_OPEQ))
+
+	L.SetTop(0)
+
+	L.PushNil()
+	L.PushNil()
+	assert.True(L.Compare(-1, -2, lua.LUA_OPEQ))
+
+	L.PushInteger(1)
+	assert.False(L.Compare(-1, -2, lua.LUA_OPEQ))
+
+	L.SetTop(0)
+}
+
+func (s *Suite) TestStackArith(assert *require.Assertions, L *lua.State) {
+	L.PushInteger(15)
+	L.PushInteger(27)
+	L.Arith(lua.LUA_OPADD)
+	assert.Equal(int64(42), L.ToInteger(-1))
+
+	L.SetTop(0)
+
+	L.PushNumber(100.5)
+	L.PushNumber(0.5)
+	L.Arith(lua.LUA_OPSUB)
+	assert.InDelta(100.0, L.ToNumber(-1), 1e-7)
+
+	L.SetTop(0)
+
+	L.PushInteger(7)
+	L.PushInteger(6)
+	L.Arith(lua.LUA_OPMUL)
+	assert.Equal(int64(42), L.ToInteger(-1))
+
+	L.SetTop(0)
+
+	L.PushInteger(126)
+	L.PushInteger(3)
+	L.Arith(lua.LUA_OPDIV)
+	assert.InDelta(42.0, L.ToNumber(-1), 1e-7)
+
+	L.SetTop(0)
+
+	L.PushInteger(10)
+	L.Arith(lua.LUA_OPUNM)
+	assert.Equal(int64(-10), L.ToInteger(-1))
+
+	L.SetTop(0)
+
+	L.PushInteger(2)
+	L.PushInteger(6)
+	L.Arith(lua.LUA_OPPOW)
+	assert.Equal(int64(64), L.ToInteger(-1))
+
+	L.SetTop(0)
+}
+
+func (s *Suite) TestStackConcat(assert *require.Assertions, L *lua.State) {
+	L.PushString("foo")
+	L.PushString("bar")
+	L.PushString("baz")
+	L.Concat(3)
+	assert.Equal("foobarbaz", L.ToString(-1))
+
+	L.SetTop(0)
+
+	L.PushInteger(123)
+	L.PushString("hi-")
+	L.Concat(2)
+	assert.Equal("123hi-", L.ToString(-1))
+
+	L.SetTop(0)
+
+	L.PushString("hello")
+	L.Concat(1)
+	assert.Equal("hello", L.ToString(-1))
+
+	L.SetTop(0)
+
+	L.Concat(0)
+	assert.Equal("", L.ToString(-1))
+}
+
+func (s *Suite) TestStackLen(assert *require.Assertions, L *lua.State) {
+	L.PushString("foobar")
+	L.Len(-1)
+	assert.Equal(int64(6), L.ToInteger(-1))
+
+	L.Pop(1)
+
+	L.PushString("")
+	L.Len(-1)
+	assert.Equal(int64(0), L.ToInteger(-1))
+
+	L.Pop(1)
+
+	L.LoadString("return {10, 20, 30, 40}")
+	L.Call(0, 1)
+	L.Len(-1)
+	assert.Equal(int64(4), L.ToInteger(-1))
+
+	L.Pop(2)
+
+	L.LoadString("return {}")
+	L.Call(0, 1)
+	L.Len(-1)
+	assert.Equal(int64(0), L.ToInteger(-1))
+
+	L.Pop(2)
+}
