@@ -67,21 +67,21 @@ type ffi struct {
 	LuaPushlightuserdata func(L unsafe.Pointer, p unsafe.Pointer)       `ffi:"lua_pushlightuserdata"`
 
 	// Table and field functions
-	LuaCreatetable func(L unsafe.Pointer, narr, nrec int)       `ffi:"lua_createtable"`
-	LuaGettable    func(L unsafe.Pointer, idx int) int          `ffi:"lua_gettable"`
-	LuaSettable    func(L unsafe.Pointer, idx int)              `ffi:"lua_settable"`
-	LuaGetfield    func(L unsafe.Pointer, idx int, k *byte) int `ffi:"lua_getfield"`
-	LuaSetfield    func(L unsafe.Pointer, idx int, k *byte)     `ffi:"lua_setfield"`
-	LuaGeti        func(L unsafe.Pointer, idx int, n int64) int `ffi:"lua_geti"`
-	LuaSeti        func(L unsafe.Pointer, idx int, n int64)     `ffi:"lua_seti"`
+	LuaCreatetable func(L unsafe.Pointer, narr, nrec int)         `ffi:"lua_createtable"`
+	LuaGettable    func(L unsafe.Pointer, idx int) int            `ffi:"lua_gettable"`
+	LuaSettable    func(L unsafe.Pointer, idx int)                `ffi:"lua_settable"`
+	LuaGetfield    func(L unsafe.Pointer, idx int, k *byte) int32 `ffi:"lua_getfield"`
+	LuaSetfield    func(L unsafe.Pointer, idx int, k *byte)       `ffi:"lua_setfield"`
+	LuaGeti        func(L unsafe.Pointer, idx int, n int64) int   `ffi:"lua_geti"`
+	LuaSeti        func(L unsafe.Pointer, idx int, n int64)       `ffi:"lua_seti"`
 	// Table raw functions
-	LuaRawget  func(L unsafe.Pointer, idx int) int                   `ffi:"lua_rawget"`
-	LuaRawset  func(L unsafe.Pointer, idx int)                       `ffi:"lua_rawset"`
-	LuaRawgeti func(L unsafe.Pointer, idx int, n int64) int          `ffi:"lua_rawgeti"`
-	LuaRawseti func(L unsafe.Pointer, idx int, n int64)              `ffi:"lua_rawseti"`
-	LuaRawgetp func(L unsafe.Pointer, idx int, p unsafe.Pointer) int `ffi:"lua_rawgetp"`
-	LuaRawsetp func(L unsafe.Pointer, idx int, p unsafe.Pointer)     `ffi:"lua_rawsetp"`
-	LuaNext    func(L unsafe.Pointer, idx int) int                   `ffi:"lua_next"`
+	LuaRawget  func(L unsafe.Pointer, idx int) int32                   `ffi:"lua_rawget"`
+	LuaRawset  func(L unsafe.Pointer, idx int)                         `ffi:"lua_rawset"`
+	LuaRawgeti func(L unsafe.Pointer, idx int, n int64) int32          `ffi:"lua_rawgeti"`
+	LuaRawseti func(L unsafe.Pointer, idx int, n int64)                `ffi:"lua_rawseti"`
+	LuaRawgetp func(L unsafe.Pointer, idx int, p unsafe.Pointer) int32 `ffi:"lua_rawgetp"`
+	LuaRawsetp func(L unsafe.Pointer, idx int, p unsafe.Pointer)       `ffi:"lua_rawsetp"`
+	LuaNext    func(L unsafe.Pointer, idx int) int                     `ffi:"lua_next"`
 	// Meta table functions
 	LuaGetmetatable func(L unsafe.Pointer, objindex int) int `ffi:"lua_getmetatable"`
 	LuaSetmetatable func(L unsafe.Pointer, objindex int) int `ffi:"lua_setmetatable"`
@@ -104,10 +104,10 @@ type ffi struct {
 	// Open all preloaded libraries.
 	LuaLOpenlibs func(L unsafe.Pointer) `ffi:"luaL_openlibs"`
 
-	LuaLNewmetatable func(L unsafe.Pointer, tname *byte) int       `ffi:"luaL_newmetatable"`
-	LuaLSetmetatable func(L unsafe.Pointer, tname *byte)           `ffi:"luaL_setmetatable"`
-	LuaLCallmeta     func(L unsafe.Pointer, ojbj int, e *byte) int `ffi:"luaL_callmeta"`
-	LuaLGetmetafield func(L unsafe.Pointer, obj int, e *byte) int  `ffi:"luaL_getmetafield"`
+	LuaLNewmetatable func(L unsafe.Pointer, tname *byte) int        `ffi:"luaL_newmetatable"`
+	LuaLSetmetatable func(L unsafe.Pointer, tname *byte)            `ffi:"luaL_setmetatable"`
+	LuaLCallmeta     func(L unsafe.Pointer, ojbj int, e *byte) int  `ffi:"luaL_callmeta"`
+	LuaLGetmetafield func(L unsafe.Pointer, obj int, e *byte) int32 `ffi:"luaL_getmetafield"`
 
 	// Auxiliary functions
 	LuaLChecknumber  func(L unsafe.Pointer, idx int) float64                             `ffi:"luaL_checknumber"`
