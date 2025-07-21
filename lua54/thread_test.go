@@ -1,6 +1,8 @@
 package lua_test
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"go.yuchanns.xyz/lua/lua54"
 )
@@ -75,4 +77,30 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 
 	_, err = co.Resume(L, 0)
 	assert.Error(err)
+}
+
+func (s *Suite) TestThreadYield(assert *require.Assertions, t *testing.T) {
+	t.Skip("FIXME: fatal error: exitsyscall: syscall frame is no longer valid")
+
+	L, err := s.lib.NewState()
+	assert.NoError(err)
+	t.Cleanup(L.Close)
+
+	// FIXME: fatal error: exitsyscall: syscall frame is no longer valid
+	L.PushCFunction(func(L *lua.State) int {
+		n := L.CheckInteger(1)
+		var (
+			a = int64(0)
+			b = int64(1)
+		)
+		for i := int64(0); i < n; i++ {
+			L.PushInteger(a)
+			assert.NoError(L.Yield(1))
+			a, b = b, a+b
+		}
+		return 0
+	})
+	assert.NoError(L.SetGlobal("fib"))
+
+	assert.NoError(L.DoFile("testdata/resume.lua"))
 }
