@@ -86,6 +86,13 @@ type ffi struct {
 	LuaGetmetatable func(L unsafe.Pointer, objindex int) int `ffi:"lua_getmetatable"`
 	LuaSetmetatable func(L unsafe.Pointer, objindex int) int `ffi:"lua_setmetatable"`
 
+	// Userdata functions
+	LuaNewuserdatauv func(L unsafe.Pointer, sz int, nuvlue int) unsafe.Pointer  `ffi:"lua_newuserdatauv"`
+	LuaGetiuservalue func(L unsafe.Pointer, idx int, n int) int32               `ffi:"lua_getiuservalue"`
+	LuaSetiuservalue func(L unsafe.Pointer, idx int, n int)                     `ffi:"lua_setiuservalue"`
+	LuaLCheckudata   func(L unsafe.Pointer, ud int, tname *byte) unsafe.Pointer `ffi:"luaL_checkudata"`
+	LuaLTestudata    func(L unsafe.Pointer, ud int, tname *byte) unsafe.Pointer `ffi:"luaL_testudata"`
+
 	LuaSetglobal func(L unsafe.Pointer, name *byte)                                                           `ffi:"lua_setglobal"`
 	LuaCallk     func(L unsafe.Pointer, nargs, nresults int, ctx int, k LuaKFunction)                         `ffi:"lua_callk"`
 	LuaPcallk    func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx int, k LuaKFunction) int            `ffi:"lua_pcallk"`
