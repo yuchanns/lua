@@ -74,6 +74,7 @@ func (s *State) Version() float64 {
 	return s.ffi.LuaVersion(s.luaL)
 }
 
+// TODO: change error struct with errocode
 func (s *State) PopError() (err error) {
 	msg := s.ToString(-1)
 	err = fmt.Errorf("%s", msg)

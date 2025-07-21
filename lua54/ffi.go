@@ -22,8 +22,11 @@ type ffi struct {
 	lib uintptr
 
 	// State manipulation
-	LuaNewstate func(f LuaAlloc, ud unsafe.Pointer) unsafe.Pointer `ffi:"lua_newstate"`
-	LuaClose    func(L unsafe.Pointer)                             `ffi:"lua_close"`
+	LuaNewstate    func(f LuaAlloc, ud unsafe.Pointer) unsafe.Pointer `ffi:"lua_newstate"`
+	LuaClose       func(L unsafe.Pointer)                             `ffi:"lua_close"`
+	LuaNewthread   func(L unsafe.Pointer) unsafe.Pointer              `ffi:"lua_newthread"`
+	LuaClosethread func(L unsafe.Pointer, from unsafe.Pointer) int    `ffi:"lua_closethread"`
+	LuaResetthread func(L unsafe.Pointer) int                         `ffi:"lua_resetthread"`
 
 	LuaAtpanic func(L unsafe.Pointer, panicf LuaCFunction) unsafe.Pointer `ffi:"lua_atpanic"`
 
@@ -55,6 +58,7 @@ type ffi struct {
 	LuaRawlen      func(L unsafe.Pointer, idx int) uint                          `ffi:"lua_rawlen"`
 	LuaTocfunction func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_tocfunction"`
 	LuaTouserdata  func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_touserdata"`
+	LuaTothread    func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_tothread"`
 
 	LuaRawequal func(L unsafe.Pointer, idx1 int, idx2 int) int         `ffi:"lua_rawequal"`
 	LuaCompare  func(L unsafe.Pointer, idx1 int, idx2 int, op int) int `ffi:"lua_compare"`
@@ -71,6 +75,7 @@ type ffi struct {
 	LuaPushcclousure     func(L unsafe.Pointer, f LuaCFunction, n int)  `ffi:"lua_pushcclosure"`
 	LuaPushboolean       func(L unsafe.Pointer, b int) int              `ffi:"lua_pushboolean"`
 	LuaPushlightuserdata func(L unsafe.Pointer, p unsafe.Pointer)       `ffi:"lua_pushlightuserdata"`
+	LuaPushthread        func(L unsafe.Pointer) int                     `ffi:"lua_pushthread"`
 
 	// Table and field functions
 	LuaCreatetable func(L unsafe.Pointer, narr, nrec int)         `ffi:"lua_createtable"`
@@ -105,6 +110,12 @@ type ffi struct {
 	LuaLoad      func(L unsafe.Pointer, reader LuaReader, dt unsafe.Pointer, chunkname *byte, mode *byte) int `ffi:"lua_load"`
 
 	LuaSetwarnf func(L unsafe.Pointer, warnf LuaWarnFunction, ud unsafe.Pointer) `ffi:"lua_setwarnf"`
+
+	// Coroutine functions
+	LuaYieldk      func(L unsafe.Pointer, nresults int, ctx int, k LuaKFunction) int              `ffi:"lua_yieldk"`
+	LuaResume      func(L unsafe.Pointer, from unsafe.Pointer, narg int, nres unsafe.Pointer) int `ffi:"lua_resume"`
+	LuaStatus      func(L unsafe.Pointer) int                                                     `ffi:"lua_status"`
+	LuaIsyieldable func(L unsafe.Pointer) int                                                     `ffi:"lua_isyieldable"`
 
 	LuaLNewstate func() unsafe.Pointer `ffi:"luaL_newstate"`
 	// Open all preloaded libraries.
