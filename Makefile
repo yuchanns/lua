@@ -31,7 +31,6 @@ endif
 # Common compiler settings
 CC = gcc
 BASE_CFLAGS = -O2 -Wall -Wextra -fPIC $(PLATFORM_CFLAGS)
-BASE_LDFLAGS = $(LIB_FLAGS) -lm
 
 # =============================================================================
 # COMMON LUA BUILD FUNCTIONS
@@ -93,7 +92,7 @@ lua$(1): setup-dirs-$(1) $$(LUA$(1)_LIB) $$(LUA$(1)_HEADER_TARGETS)
 # Link Lua $(1) library
 $$(LUA$(1)_LIB): $$(LUA$(1)_CORE_OBJS)
 	@mkdir -p $$(dir $$@)
-	$$(CC) $$(BASE_LDFLAGS) -o $$@ $$^
+	$$(CC) $$(LIB_FLAGS) -o $$@ $$^ -lm
 
 # Compile Lua $(1) object files
 $$(LUA$(1)_SRC)/%.o: $$(LUA$(1)_SRC)/%.c
