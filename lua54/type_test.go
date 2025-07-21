@@ -99,40 +99,40 @@ func (s *Suite) TestTypeToRawLen(assert *require.Assertions, L *lua.State) {
 
 	testString := "Hello, World!"
 	L.PushString(testString)
-	rawLen := L.ToRawLen(-1)
-	assert.Equal(len(testString), rawLen)
+	rawLen := L.RawLen(-1)
+	assert.Equal(uint(len(testString)), rawLen)
 
 	L.Pop(1)
 
 	L.PushString("")
-	rawLen = L.ToRawLen(-1)
-	assert.Equal(0, rawLen)
+	rawLen = L.RawLen(-1)
+	assert.Equal(uint(0), rawLen)
 
 	L.Pop(1)
 
 	longString := "This is a longer test string with more characters"
 	L.PushString(longString)
-	rawLen = L.ToRawLen(-1)
-	assert.Equal(len(longString), rawLen)
+	rawLen = L.RawLen(-1)
+	assert.Equal(uint(len(longString)), rawLen)
 
 	L.Pop(1)
 
 	L.PushInteger(42)
 
-	rawLen = L.ToRawLen(-1)
-	assert.Equal(0, rawLen)
+	rawLen = L.RawLen(-1)
+	assert.Equal(uint(0), rawLen)
 
 	L.Pop(1)
 
 	L.PushBoolean(true)
-	rawLen = L.ToRawLen(-1)
-	assert.Equal(0, rawLen)
+	rawLen = L.RawLen(-1)
+	assert.Equal(uint(0), rawLen)
 
 	L.Pop(1)
 
 	L.PushNil()
-	rawLen = L.ToRawLen(-1)
-	assert.Equal(0, rawLen)
+	rawLen = L.RawLen(-1)
+	assert.Equal(uint(0), rawLen)
 
 	L.Pop(1)
 
@@ -140,9 +140,8 @@ func (s *Suite) TestTypeToRawLen(assert *require.Assertions, L *lua.State) {
 	err := L.PushLightUserData(&testVar)
 	assert.NoError(err)
 
-	rawLen = L.ToRawLen(-1)
-	assert.Equal(0, rawLen)
-
+	rawLen = L.RawLen(-1)
+	assert.Equal(uint(0), rawLen)
 }
 
 func (s *Suite) TestFunction(assert *require.Assertions, L *lua.State) {
