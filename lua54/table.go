@@ -21,7 +21,7 @@ func (s *State) GetField(idx int, k string) (typ int, err error) {
 	if err != nil {
 		return
 	}
-	typ = s.ffi.LuaGetfield(s.luaL, idx, p)
+	typ = int(s.ffi.LuaGetfield(s.luaL, idx, p))
 	return
 }
 
@@ -47,7 +47,7 @@ func (s *State) NewTable() {
 }
 
 func (s *State) RawGet(idx int) int {
-	return s.ffi.LuaRawget(s.luaL, idx)
+	return int(s.ffi.LuaRawget(s.luaL, idx))
 }
 
 func (s *State) RawSet(idx int) {
@@ -55,7 +55,7 @@ func (s *State) RawSet(idx int) {
 }
 
 func (s *State) RawGetI(idx int, n int64) int {
-	return s.ffi.LuaRawgeti(s.luaL, idx, n)
+	return int(s.ffi.LuaRawgeti(s.luaL, idx, n))
 }
 
 func (s *State) RawSetI(idx int, n int64) {
@@ -70,7 +70,7 @@ func (s *State) RawGetP(idx int, ud any) (typ int, err error) {
 	if err != nil {
 		return
 	}
-	typ = s.ffi.LuaRawgetp(s.luaL, idx, p)
+	typ = int(s.ffi.LuaRawgetp(s.luaL, idx, p))
 	return
 }
 
@@ -117,12 +117,7 @@ func (s *State) LSetMetaTable(tname string) (err error) {
 }
 
 func (s *State) LGetMetaTable(tname string) (typ int, err error) {
-	k, err := tools.BytePtrFromString(tname)
-	if err != nil {
-		return
-	}
-	typ = s.ffi.LuaGetfield(s.luaL, LUA_REGISTRYINDEX, k)
-	return
+	return s.GetField(LUA_REGISTRYINDEX, tname)
 }
 
 func (s *State) LGetMetaField(obj int, e string) (typ int, err error) {
@@ -130,7 +125,7 @@ func (s *State) LGetMetaField(obj int, e string) (typ int, err error) {
 	if err != nil {
 		return
 	}
-	typ = s.ffi.LuaLGetmetafield(s.luaL, obj, p)
+	typ = int(s.ffi.LuaLGetmetafield(s.luaL, obj, p))
 	return
 }
 
