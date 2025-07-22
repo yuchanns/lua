@@ -7,10 +7,13 @@ import (
 	"go.yuchanns.xyz/lua/internal/tools"
 )
 
+// Lib represents a loaded Lua 5.4 dynamic library binding in Go. It provides access to library-level operations and state creation (see: https://www.lua.org/manual/5.4/manual.html#4.3).
 type Lib struct {
 	ffi *ffi
 }
 
+// New loads a Lua 5.4 dynamic library from the given path and returns a Lib for further state management.
+// Returns an error if the library cannot be loaded.
 func New(path string) (lib *Lib, err error) {
 	ffi, err := newFFI(path)
 	if err != nil {
@@ -24,6 +27,7 @@ func New(path string) (lib *Lib, err error) {
 	return
 }
 
+// Close releases the loaded Lua dynamic library and any resources associated with it in this Lib instance.
 func (l *Lib) Close() {
 	if l.ffi == nil {
 		return
@@ -34,6 +38,9 @@ func (l *Lib) Close() {
 	l.ffi = nil
 }
 
+// NewState creates a new Lua runtime state from this Lib (binding to the dynamic library).
+// Additional options may be provided for custom allocators and user data.
+// Returns a State and possibly an error if the library is closed.
 func (l *Lib) NewState(o ...stateOptFunc) (state *State, err error) {
 	if l.ffi == nil {
 		return nil, fmt.Errorf("Lua library is closed")
@@ -52,6 +59,7 @@ func (l *Lib) NewState(o ...stateOptFunc) (state *State, err error) {
 	return
 }
 
+// stateOptFunc is an option setter for customizing State creation (internal use).
 type stateOptFunc func(o *stateOpt)
 
 // WithAlloc sets a custom memory allocation function for the Lua state.
