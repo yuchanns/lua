@@ -22,7 +22,7 @@ type LuaCFunction func(L unsafe.Pointer) int
 
 // LuaKFunction is the Go equivalent for lua_KFunction, supporting continuation-style yields from C to Lua.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_KFunction
-type LuaKFunction func(L unsafe.Pointer, status int, ctx int) int
+type LuaKFunction func(L unsafe.Pointer, status int, ctx unsafe.Pointer) int
 
 // LuaWarnFunction is a Go representation of the Lua C API lua_WarnFunction for error and warning hooks.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_WarnFunction
@@ -117,14 +117,14 @@ type ffi struct {
 	LuaLTestudata    func(L unsafe.Pointer, ud int, tname *byte) unsafe.Pointer `ffi:"luaL_testudata"`
 
 	LuaSetglobal func(L unsafe.Pointer, name *byte)                                                           `ffi:"lua_setglobal"`
-	LuaCallk     func(L unsafe.Pointer, nargs, nresults int, ctx int, k LuaKFunction)                         `ffi:"lua_callk"`
-	LuaPcallk    func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx int, k LuaKFunction) int            `ffi:"lua_pcallk"`
+	LuaCallk     func(L unsafe.Pointer, nargs, nresults int, ctx unsafe.Pointer, k LuaKFunction)              `ffi:"lua_callk"`
+	LuaPcallk    func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx unsafe.Pointer, k LuaKFunction) int `ffi:"lua_pcallk"`
 	LuaLoad      func(L unsafe.Pointer, reader LuaReader, dt unsafe.Pointer, chunkname *byte, mode *byte) int `ffi:"lua_load"`
 
 	LuaSetwarnf func(L unsafe.Pointer, warnf LuaWarnFunction, ud unsafe.Pointer) `ffi:"lua_setwarnf"`
 
 	// Coroutine functions
-	LuaYieldk      func(L unsafe.Pointer, nresults int, ctx int, k LuaKFunction) int              `ffi:"lua_yieldk"`
+	LuaYieldk      func(L unsafe.Pointer, nresults int, ctx unsafe.Pointer, k LuaKFunction) int   `ffi:"lua_yieldk"`
 	LuaResume      func(L unsafe.Pointer, from unsafe.Pointer, narg int, nres unsafe.Pointer) int `ffi:"lua_resume"`
 	LuaStatus      func(L unsafe.Pointer) int                                                     `ffi:"lua_status"`
 	LuaIsyieldable func(L unsafe.Pointer) int                                                     `ffi:"lua_isyieldable"`
