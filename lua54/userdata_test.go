@@ -69,7 +69,7 @@ func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {
 	L.Pop(1)
 
 	L.AtPanic(func(L *lua.State) int {
-		err := L.PopError()
+		err := L.CheckError(lua.LUA_ERRERR)
 		assert.Error(err)
 		panic(err)
 	})
