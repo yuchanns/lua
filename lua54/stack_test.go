@@ -256,37 +256,35 @@ func (s *Suite) TestStackReplace(assert *require.Assertions, L *lua.State) {
 }
 
 func (s *Suite) TestStackXMove(assert *require.Assertions, L *lua.State) {
-
-	L2, err := s.lib.NewState()
-	assert.NoError(err)
-	defer L2.Close()
+	co := L.NewThread()
+	L.SetTop(0)
 
 	L.PushInteger(1)
 	L.PushInteger(2)
 	L.PushInteger(3)
 	assert.Equal(3, L.GetTop())
-	assert.Equal(0, L2.GetTop())
+	assert.Equal(0, co.GetTop())
 
-	L.XMove(L2, 2)
+	L.XMove(co, 2)
 	assert.Equal(1, L.GetTop())
-	assert.Equal(2, L2.GetTop())
+	assert.Equal(2, co.GetTop())
 
 	assert.Equal(int64(1), L.ToInteger(1))
 
-	assert.Equal(int64(2), L2.ToInteger(1))
-	assert.Equal(int64(3), L2.ToInteger(2))
+	assert.Equal(int64(2), co.ToInteger(1))
+	assert.Equal(int64(3), co.ToInteger(2))
 
-	L.XMove(L2, 0)
+	L.XMove(co, 0)
 	assert.Equal(1, L.GetTop())
-	assert.Equal(2, L2.GetTop())
+	assert.Equal(2, co.GetTop())
 
-	L.XMove(L2, 1)
+	L.XMove(co, 1)
 	assert.Equal(0, L.GetTop())
-	assert.Equal(3, L2.GetTop())
+	assert.Equal(3, co.GetTop())
 
-	assert.Equal(int64(2), L2.ToInteger(1))
-	assert.Equal(int64(3), L2.ToInteger(2))
-	assert.Equal(int64(1), L2.ToInteger(3))
+	assert.Equal(int64(2), co.ToInteger(1))
+	assert.Equal(int64(3), co.ToInteger(2))
+	assert.Equal(int64(1), co.ToInteger(3))
 }
 
 func (s *Suite) TestStackComplexOperations(assert *require.Assertions, L *lua.State) {

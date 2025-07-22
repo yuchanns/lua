@@ -341,7 +341,7 @@ func (s *Suite) TestPCall(assert *require.Assertions, L *lua.State) {
 	}
 	L.Pop(5)
 
-	L.PushCFunction(func(L *lua.State) int {
+	L.PushGoFunction(func(L *lua.State) int {
 		assert.Equal("hello", L.ToString(1))
 		return 0
 	})
@@ -403,7 +403,7 @@ func (s *Suite) TestCall(assert *require.Assertions, L *lua.State) {
 	}
 	L.Pop(5)
 
-	L.PushCFunction(func(L *lua.State) int {
+	L.PushGoFunction(func(L *lua.State) int {
 		assert.Equal("hello", L.ToString(1))
 		return 0
 	})
