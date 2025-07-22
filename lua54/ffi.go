@@ -8,16 +8,28 @@ import (
 	"go.yuchanns.xyz/lua/internal/tools"
 )
 
+// LuaReader represents the Go equivalent of the lua_Reader C callback type for streaming data into the Lua state.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_Reader
 type LuaReader func(L unsafe.Pointer, ud unsafe.Pointer, sz *int) *byte
 
+// LuaAlloc mirrors the lua_Alloc C function type, used for advanced state memory allocation customization.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_Alloc
 type LuaAlloc func(ud unsafe.Pointer, ptr unsafe.Pointer, osize, nsize int) unsafe.Pointer
 
+// LuaCFunction is the Go equivalent of the C lua_CFunction for stack-based callbacks.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_CFunction
 type LuaCFunction func(L unsafe.Pointer) int
 
+// LuaKFunction is the Go equivalent for lua_KFunction, supporting continuation-style yields from C to Lua.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_KFunction
 type LuaKFunction func(L unsafe.Pointer, status int, ctx int) int
 
+// LuaWarnFunction is a Go representation of the Lua C API lua_WarnFunction for error and warning hooks.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_WarnFunction
 type LuaWarnFunction func(ud unsafe.Pointer, msg *byte, tocont int)
 
+// ffi stores all dynamically loaded Lua C API entry points for runtime use.
+// This struct provides Go bindings to the Lua 5.4 C API using purego FFI.
 type ffi struct {
 	lib uintptr
 
@@ -144,6 +156,8 @@ type ffi struct {
 	LuaLLoadbufferx func(L unsafe.Pointer, buff *byte, sz int, name *byte, mode *byte) int `ffi:"luaL_loadbufferx"`
 }
 
+// newFFI loads the Lua 5.4 dynamic library at the specified path and registers all available exported entrypoints.
+// It provides a Go ffi struct ready for low-level Lua C API interaction in memory.
 func newFFI(path string) (FFI *ffi, err error) {
 	lib, err := tools.LoadLibrary(path)
 	if err != nil {

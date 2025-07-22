@@ -13,6 +13,9 @@ type stateOpt struct {
 	userData unsafe.Pointer
 }
 
+// State represents a single Lua interpreter state, holding runtime and memory context.
+// It is the Go binding for the Lua C API's lua_State pointer, supporting all standard C API operations.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_State
 type State struct {
 	ffi *ffi
 
@@ -41,10 +44,15 @@ func newState(ffi *ffi, o *stateOpt) (state *State) {
 	}
 }
 
+// OpenLibs loads all standard Lua libraries into the current state.
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_openlibs
 func (s *State) OpenLibs() {
 	s.ffi.LuaLOpenlibs(s.luaL)
 }
 
+// Close properly shuts down and deallocates the Lua state, freeing any owned resources.
+// After calling Close, the State must not be used again.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_close
 func (s *State) Close() {
 	if s.luaL == nil {
 		return
@@ -57,6 +65,8 @@ func (s *State) Close() {
 
 type CFunc func(L *State) int
 
+// AtPanic sets a Go function as the Lua panic handler for this state, returning the old panic handler.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_atpanic
 func (s *State) AtPanic(fn CFunc) (old CFunc) {
 	panicf := func(L unsafe.Pointer) int {
 		state := &State{
@@ -73,10 +83,14 @@ func (s *State) AtPanic(fn CFunc) (old CFunc) {
 	}
 }
 
+// Version returns the current version of the Lua runtime loaded in this state.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_version
 func (s *State) Version() float64 {
 	return s.ffi.LuaVersion(s.luaL)
 }
 
+// CheckError transforms a Lua C API error code into a Go error,
+// automatically extracting the human-readable message from the stack if needed.
 func (s *State) CheckError(status int) error {
 	if status == LUA_OK {
 		return nil
@@ -89,6 +103,8 @@ func (s *State) CheckError(status int) error {
 	}
 }
 
+// Errorf raises a formatted Lua error from the Go side, pushing the error onto the Lua stack.
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_error
 func (s *State) Errorf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 	b, _ := tools.BytePtrFromString(msg)
@@ -96,6 +112,8 @@ func (s *State) Errorf(format string, args ...any) {
 	return
 }
 
+// SetGlobal sets a global variable in the Lua environment using the value at the top of the stack.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_setglobal
 func (s *State) SetGlobal(name string) (err error) {
 	n, err := tools.BytePtrFromString(name)
 	if err != nil {
@@ -105,7 +123,8 @@ func (s *State) SetGlobal(name string) (err error) {
 	return
 }
 
-// Load loads a Lua chunk without running it.
+// Load loads a Lua chunk from an io.Reader, compiling but not executing the code. This mirrors lua_load.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_load
 func (s *State) Load(r io.Reader, chunkname string, mode ...string) (err error) {
 	cname, err := tools.BytePtrFromString(chunkname)
 	if err != nil {
@@ -143,10 +162,13 @@ func (s *State) Load(r io.Reader, chunkname string, mode ...string) (err error) 
 	return
 }
 
+// LoadBuffer loads a Lua chunk from a byte slice with the given chunk name.
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_loadbuffer
 func (s *State) LoadBuffer(buff []byte, name string) (err error) {
 	return s.LoadBufferx(buff, name)
 }
 
+// LoadBufferx is the extended form of LoadBuffer supporting the mode parameter, as in luaL_loadbufferx.
 func (s *State) LoadBufferx(buff []byte, name string, mode ...string) (err error) {
 	b, err := tools.BytePtrFromString(name)
 	if err != nil {
@@ -168,6 +190,8 @@ func (s *State) LoadBufferx(buff []byte, name string, mode ...string) (err error
 	return
 }
 
+// DoString loads and runs a given Lua string in the current state. Returns any error encountered.
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_dostring
 func (s *State) DoString(scode string) (err error) {
 	err = s.LoadString(scode)
 	if err != nil {
@@ -176,6 +200,8 @@ func (s *State) DoString(scode string) (err error) {
 	return s.PCall(0, LUA_MULTRET, 0)
 }
 
+// LoadString loads a Lua chunk from a Go string with the provided source code.
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_loadstring
 func (s *State) LoadString(scode string) (err error) {
 	n, err := tools.BytePtrFromString(scode)
 	if err != nil {
@@ -185,6 +211,8 @@ func (s *State) LoadString(scode string) (err error) {
 	return
 }
 
+// DoFile loads and runs a Lua source file.
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_dofile
 func (s *State) DoFile(filename string) (err error) {
 	err = s.LoadFile(filename)
 	if err != nil {
@@ -193,6 +221,8 @@ func (s *State) DoFile(filename string) (err error) {
 	return s.PCall(0, LUA_MULTRET, 0)
 }
 
+// LoadFilex loads (but does not run) a Lua source file, optionally specifying the mode (text, binary, or both).
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_loadfilex
 func (s *State) LoadFilex(filename string, mode ...string) (err error) {
 	fname, err := tools.BytePtrFromString(filename)
 	if err != nil {
@@ -209,29 +239,39 @@ func (s *State) LoadFilex(filename string, mode ...string) (err error) {
 	return
 }
 
+// LoadFile loads a Lua source file from disk without executing it.
 func (s *State) LoadFile(filename string) (err error) {
 	return s.LoadFilex(filename)
 }
 
+// PCall calls a Lua function in protected mode, with argument and result counts. If errors occur, they are returned.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_pcall
 func (s *State) PCall(nargs, nresults, errfunc int) (err error) {
 	return s.PCallK(nargs, nresults, errfunc, 0, NoOpKFunction)
 }
 
+// PCallK is like PCall but with full support for Lua continuation functions and execution contexts. Used for advanced coroutine yield/resume situations.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_pcallk
 func (s *State) PCallK(nargs, nresults, errfunc int, ctx int, k LuaKFunction) (err error) {
 	err = s.CheckError(s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, k))
 	return
 }
 
+// Call invokes a Lua function (not in protected mode) with given arg and result counts. Panics on error.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_call
 func (s *State) Call(nargs, nresults int) {
 	s.CallK(nargs, nresults, 0, NoOpKFunction)
 }
 
+// CallK calls a Lua function with the given continuation and context, supporting advanced coroutine control.
 func (s *State) CallK(nargs, nresults, ctx int, k LuaKFunction) {
 	s.ffi.LuaCallk(s.luaL, nargs, nresults, ctx, k)
 }
 
 type WarnFunc func(L *State, msg string, tocont int)
 
+// SetWarnf sets a Go warning callback for this Lua state, called on warnings/errors from the Lua VM.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_setwarnf
 func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 	s.ffi.LuaSetwarnf(s.luaL, func(ud unsafe.Pointer, msg *byte, tocont int) {
 		state := &State{

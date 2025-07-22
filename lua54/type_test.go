@@ -65,7 +65,7 @@ func (s *Suite) TestTypeToCFunction(assert *require.Assertions, L *lua.State) {
 
 	L.PushGoFunction(testCFunc)
 
-	assert.True(L.IsCFunction(-1))
+	assert.True(L.IsGoFunction(-1))
 	assert.Equal(lua.LUA_TFUNCTION, L.Type(-1))
 	assert.Equal("function", L.TypeName(L.Type(-1)))
 
@@ -77,20 +77,20 @@ func (s *Suite) TestTypeToCFunction(assert *require.Assertions, L *lua.State) {
 	assert.NoError(err)
 
 	assert.True(L.IsFunction(-1))
-	assert.False(L.IsCFunction(-1))
+	assert.False(L.IsGoFunction(-1))
 
 	luaFuncPtr := L.ToCFunction(-1)
 	assert.Nil(luaFuncPtr)
 
 	L.Pop(1)
 	L.PushInteger(42)
-	assert.False(L.IsCFunction(-1))
+	assert.False(L.IsGoFunction(-1))
 	nonFuncPtr := L.ToCFunction(-1)
 	assert.Nil(nonFuncPtr)
 
 	L.Pop(1)
 	L.PushNil()
-	assert.False(L.IsCFunction(-1))
+	assert.False(L.IsGoFunction(-1))
 	nilPtr := L.ToCFunction(-1)
 	assert.Nil(nilPtr)
 }

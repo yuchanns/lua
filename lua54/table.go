@@ -4,18 +4,28 @@ import (
 	"go.yuchanns.xyz/lua/internal/tools"
 )
 
+// CreateTable creates a new empty table and pushes it onto the stack.
+// Narr and nrec are hints for the array and hash part sizes.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_createtable
 func (s *State) CreateTable(narr, nrec int) {
 	s.ffi.LuaCreatetable(s.luaL, narr, nrec)
 }
 
+// GetTable retrieves a value in table at idx using the key at the top of the stack, and pushes the result.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_gettable
 func (s *State) GetTable(idx int) int {
 	return s.ffi.LuaGettable(s.luaL, idx)
 }
 
+// SetTable sets a value in a table at idx using a key-value pair from the stack.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_settable
 func (s *State) SetTable(idx int) {
 	s.ffi.LuaSettable(s.luaL, idx)
 }
 
+// GetField pushes onto the stack the value of the field k from the table at idx.
+// Returns the type of the pushed value.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_getfield
 func (s *State) GetField(idx int, k string) (typ int, err error) {
 	p, err := tools.BytePtrFromString(k)
 	if err != nil {
@@ -25,6 +35,8 @@ func (s *State) GetField(idx int, k string) (typ int, err error) {
 	return
 }
 
+// SetField sets the field k of the table at idx using a value from the stack.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_setfield
 func (s *State) SetField(idx int, k string) (err error) {
 	p, err := tools.BytePtrFromString(k)
 	if err != nil {
@@ -34,37 +46,52 @@ func (s *State) SetField(idx int, k string) (err error) {
 	return
 }
 
+// GetI pushes onto the stack the value n from the table at idx (uses integer key n).
+// Returns the value's type.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_geti
 func (s *State) GetI(idx int, n int64) int {
 	return s.ffi.LuaGeti(s.luaL, idx, n)
 }
 
+// SetI sets a value at index n in the table at idx, using the value on top of the stack.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_seti
 func (s *State) SetI(idx int, n int64) {
 	s.ffi.LuaSeti(s.luaL, idx, n)
 }
 
+// NewTable pushes a new empty table onto the stack.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_newtable
 func (s *State) NewTable() {
 	s.ffi.LuaCreatetable(s.luaL, 0, 0)
 }
 
+// RawGet does a raw (no metamethods) lookup in table at idx using key from stack top.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_rawget
 func (s *State) RawGet(idx int) int {
 	return int(s.ffi.LuaRawget(s.luaL, idx))
 }
 
+// RawSet does a raw (no metamethods) table set, using a key/value from the stack.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_rawset
 func (s *State) RawSet(idx int) {
 	s.ffi.LuaRawset(s.luaL, idx)
 }
 
+// RawGetI retrieves the entry with key n from the table at idx, ignoring metamethods.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_rawgeti
 func (s *State) RawGetI(idx int, n int64) int {
 	return int(s.ffi.LuaRawgeti(s.luaL, idx, n))
 }
 
+// RawSetI sets the value with key n in the table at idx, ignoring metamethods.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_rawseti
 func (s *State) RawSetI(idx int, n int64) {
 	s.ffi.LuaRawseti(s.luaL, idx, n)
 }
 
-// RawGetP retrieves a value from the stack at the given index using a light userdata pointer.
-// UNSAFE: It is the caller's responsibility to ensure that the pointer remains valid for the
-// lifetime of the Lua state.
+// RawGetP retrieves a value from a table at idx using a light userdata as the key.
+// UNSAFE: The caller must ensure pointer validity for the Lua state duration.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_rawgetp
 func (s *State) RawGetP(idx int, ud any) (typ int, err error) {
 	p, err := tools.ToLightUserData(ud)
 	if err != nil {
@@ -74,9 +101,9 @@ func (s *State) RawGetP(idx int, ud any) (typ int, err error) {
 	return
 }
 
-// RawSetP sets a value at the given index using a light userdata pointer.
-// UNSAFE: It is the caller's responsibility to ensure that the pointer remains valid for the
-// lifetime of the Lua state.
+// RawSetP stores a value in a table at idx using a light userdata key.
+// UNSAFE: The caller must ensure pointer validity for the Lua state duration.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_rawsetp
 func (s *State) RawSetP(idx int, ud any) (err error) {
 	p, err := tools.ToLightUserData(ud)
 	if err != nil {
@@ -86,18 +113,28 @@ func (s *State) RawSetP(idx int, ud any) (err error) {
 	return
 }
 
+// Next pops a key from the stack, and pushes the next key-value pair from table at idx.
+// Returns false if no more elements.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_next
 func (s *State) Next(idx int) bool {
 	return s.ffi.LuaNext(s.luaL, idx) != 0
 }
 
+// GeIMetaTable retrieves the metatable of the value at the given index and pushes it onto the stack.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_getmetatable
 func (s *State) GeIMetaTable(index int) int {
 	return s.ffi.LuaGetmetatable(s.luaL, index)
 }
 
+// SetIMetaTable sets the metatable for the value at the given index.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_setmetatable
 func (s *State) SetIMetaTable(index int) int {
 	return s.ffi.LuaSetmetatable(s.luaL, index)
 }
 
+// NewMetaTable creates a new metatable with the given name and pushes it onto the stack.
+// Returns true if the metatable already existed.
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_newmetatable
 func (s *State) NewMetaTable(tname string) (has bool, err error) {
 	p, err := tools.BytePtrFromString(tname)
 	if err != nil {
@@ -107,6 +144,8 @@ func (s *State) NewMetaTable(tname string) (has bool, err error) {
 	return
 }
 
+// SetMetaTable sets the metatable of the value at the top of the stack to the named metatable.
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_setmetatable
 func (s *State) SetMetaTable(tname string) (err error) {
 	p, err := tools.BytePtrFromString(tname)
 	if err != nil {
@@ -116,10 +155,15 @@ func (s *State) SetMetaTable(tname string) (err error) {
 	return
 }
 
+// GetMetaTable retrieves the metatable associated with the given name from the registry.
+// Returns the type of the metatable.
 func (s *State) GetMetaTable(tname string) (typ int, err error) {
 	return s.GetField(LUA_REGISTRYINDEX, tname)
 }
 
+// GetMetaField pushes the named metafield of the given object onto the stack.
+// Returns the type of the metafield.
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_getmetafield
 func (s *State) GetMetaField(obj int, e string) (typ int, err error) {
 	p, err := tools.BytePtrFromString(e)
 	if err != nil {
@@ -129,6 +173,9 @@ func (s *State) GetMetaField(obj int, e string) (typ int, err error) {
 	return
 }
 
+// CallMeta calls the named metamethod on the given object.
+// Returns true if the metamethod exists and was called.
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_callmeta
 func (s *State) CallMeta(obj int, e string) (has bool, err error) {
 	p, err := tools.BytePtrFromString(e)
 	if err != nil {
