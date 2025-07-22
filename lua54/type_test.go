@@ -192,7 +192,7 @@ func (s *Suite) TestCheckNumber(assert *require.Assertions, L *lua.State) {
 	L.Pop(1)
 
 	L.AtPanic(func(L *lua.State) int {
-		err := L.PopError()
+		err := L.CheckError(lua.LUA_ERRERR)
 		assert.Error(err)
 
 		panic(err)
@@ -292,7 +292,7 @@ func (s *Suite) TestCheckType(assert *require.Assertions, L *lua.State) {
 	L.Pop(1)
 
 	L.AtPanic(func(L *lua.State) int {
-		err := L.PopError()
+		err := L.CheckError(lua.LUA_ERRERR)
 		assert.Error(err)
 
 		panic(err)
@@ -328,7 +328,7 @@ func (s *Suite) TestCheckAny(assert *require.Assertions, L *lua.State) {
 	L.Pop(1)
 
 	L.AtPanic(func(L *lua.State) int {
-		err := L.PopError()
+		err := L.CheckError(lua.LUA_ERRERR)
 		assert.Error(err)
 
 		panic(err)

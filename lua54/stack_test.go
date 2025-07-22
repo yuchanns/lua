@@ -333,16 +333,20 @@ func (s *Suite) TestStackComplexOperations(assert *require.Assertions, L *lua.St
 }
 
 func (s *Suite) TestAtPanic(assert *require.Assertions, L *lua.State) {
+	errMsg := "Oops, no enclosing lua_pcall"
 	_ = L.AtPanic(func(L *lua.State) int {
-		err := L.PopError()
+		err := L.CheckError(lua.LUA_ERRERR)
 		assert.Error(err)
+
+		luaErr, ok := err.(*lua.Error)
+		assert.True(ok)
+		assert.Equal(lua.LUA_ERRERR, luaErr.Status())
+		assert.Equal(errMsg, luaErr.Message())
 
 		panic(err.Error())
 	})
 
-	errMsg := "Oops, no enclosing lua_pcall"
-	assert.PanicsWithValue(
-		errMsg,
+	assert.Panics(
 		func() {
 			L.Errorf("%s", errMsg)
 		},

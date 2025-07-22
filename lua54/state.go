@@ -32,7 +32,6 @@ func newState(ffi *ffi, o *stateOpt) (state *State) {
 	} else {
 		L = ffi.LuaLNewstate()
 	}
-	ffi.LuaLOpenlibs(L)
 
 	return &State{
 		ffi:  ffi,
@@ -40,6 +39,10 @@ func newState(ffi *ffi, o *stateOpt) (state *State) {
 
 		refAlloc: refAlloc,
 	}
+}
+
+func (s *State) OpenLibs() {
+	s.ffi.LuaLOpenlibs(s.luaL)
 }
 
 func (s *State) Close() {
@@ -74,12 +77,16 @@ func (s *State) Version() float64 {
 	return s.ffi.LuaVersion(s.luaL)
 }
 
-// TODO: change error struct with errocode
-func (s *State) PopError() (err error) {
+func (s *State) CheckError(status int) error {
+	if status == LUA_OK {
+		return nil
+	}
 	msg := s.ToString(-1)
-	err = fmt.Errorf("%s", msg)
 	s.Pop(1)
-	return
+	return &Error{
+		status:  status,
+		message: msg,
+	}
 }
 
 func (s *State) Errorf(format string, args ...any) {
@@ -132,10 +139,7 @@ func (s *State) Load(r io.Reader, chunkname string, mode ...string) (err error) 
 	// SAFETY: it is safe to pass the reader as an unsafe.Pointer because
 	// the reader immediately consumes the data from the io.Reader after
 	// the call to LuaLoad. So it will not outlive the io.Reader.
-	status := s.ffi.LuaLoad(s.luaL, reader, unsafe.Pointer(&r), cname, m)
-	if status != LUA_OK {
-		err = s.PopError()
-	}
+	err = s.CheckError(s.ffi.LuaLoad(s.luaL, reader, unsafe.Pointer(&r), cname, m))
 	return
 }
 
@@ -160,10 +164,7 @@ func (s *State) LoadBufferx(buff []byte, name string, mode ...string) (err error
 	if sz > 0 {
 		bf = &buff[0]
 	}
-	status := s.ffi.LuaLLoadbufferx(s.luaL, bf, sz, b, m)
-	if status != LUA_OK {
-		err = s.PopError()
-	}
+	err = s.CheckError(s.ffi.LuaLLoadbufferx(s.luaL, bf, sz, b, m))
 	return
 }
 
@@ -180,10 +181,7 @@ func (s *State) LoadString(scode string) (err error) {
 	if err != nil {
 		return
 	}
-	status := s.ffi.LuaLLoadstring(s.luaL, n)
-	if status != LUA_OK {
-		err = s.PopError()
-	}
+	err = s.CheckError(s.ffi.LuaLLoadstring(s.luaL, n))
 	return
 }
 
@@ -207,10 +205,7 @@ func (s *State) LoadFilex(filename string, mode ...string) (err error) {
 			return
 		}
 	}
-	status := s.ffi.LuaLLoadfilex(s.luaL, fname, m)
-	if status != LUA_OK {
-		err = s.PopError()
-	}
+	err = s.CheckError(s.ffi.LuaLLoadfilex(s.luaL, fname, m))
 	return
 }
 
@@ -223,10 +218,7 @@ func (s *State) PCall(nargs, nresults, errfunc int) (err error) {
 }
 
 func (s *State) PCallK(nargs, nresults, errfunc int, ctx int, k LuaKFunction) (err error) {
-	status := s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, k)
-	if status != LUA_OK {
-		err = s.PopError()
-	}
+	err = s.CheckError(s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, k))
 	return
 }
 

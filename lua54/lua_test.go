@@ -44,6 +44,8 @@ func (s *Suite) testWithState(testFunc funcWithState) func(t *testing.T) {
 		L, err := s.lib.NewState()
 		assert.NoError(err)
 
+		L.OpenLibs()
+
 		t.Cleanup(L.Close)
 
 		testFunc(s, assert, L)
