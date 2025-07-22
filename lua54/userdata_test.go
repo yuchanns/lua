@@ -1,6 +1,8 @@
 package lua_test
 
 import (
+	"unsafe"
+
 	"github.com/stretchr/testify/require"
 	"go.yuchanns.xyz/lua/lua54"
 )
@@ -108,4 +110,37 @@ func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {
 	ptr, err = L.TestUserData(9999, mtName)
 	assert.NoError(err)
 	assert.Nil(ptr)
+
+	type UserData struct {
+		Name string
+		Age  int
+	}
+	var ud *UserData
+	ud = (*UserData)(L.NewUserData(int(unsafe.Sizeof(*ud))))
+	ud.Name = "John Doe"
+	ud.Age = 30
+
+	L.NewTable()
+	L.PushString("__index")
+	L.PushGoFunction(func(L *lua.State) int {
+		userdata := (*UserData)(L.ToUserData(1))
+		key := L.ToString(2)
+		switch key {
+		case "Name":
+			L.PushString(userdata.Name)
+			return 1
+		case "Age":
+			L.PushInteger(int64(userdata.Age))
+			return 1
+		default:
+			L.PushNil()
+			return 1
+		}
+	})
+	L.SetTable(-3)
+	L.SetMetaTable(-2)
+
+	L.SetGlobal("userDataTest")
+
+	assert.NoError(L.DoFile("testdata/userdata.lua"))
 }

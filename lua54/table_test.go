@@ -463,7 +463,7 @@ func (s *Suite) TestTableMeta(assert *require.Assertions, L *lua.State) {
 	mtIdx := L.GetTop()
 
 	L.PushString("__call")
-	L.PushCFunction(func(L *lua.State) int {
+	L.PushGoFunction(func(L *lua.State) int {
 		L.PushString("called")
 		return 1
 	})
@@ -497,7 +497,7 @@ func (s *Suite) TestTableMeta(assert *require.Assertions, L *lua.State) {
 	assert.NoError(err)
 	assert.True(has)
 	L.PushString("__call")
-	L.PushCFunction(func(L *lua.State) int {
+	L.PushGoFunction(func(L *lua.State) int {
 		L.PushString("mt called")
 		return 1
 	})

@@ -106,7 +106,7 @@ func (s *State) PushString(sv string) (ret *byte, err error) {
 	return
 }
 
-func (s *State) PushCClousure(f CFunc, n int) {
+func (s *State) PushGoClousure(f CFunc, n int) {
 	s.ffi.LuaPushcclousure(s.luaL, func(L unsafe.Pointer) int {
 		state := &State{
 			ffi:  s.ffi,
@@ -136,6 +136,6 @@ func (s *State) PushLightUserData(ud any) (err error) {
 	return
 }
 
-func (s *State) PushCFunction(f CFunc) {
-	s.PushCClousure(f, 0)
+func (s *State) PushGoFunction(f CFunc) {
+	s.PushGoClousure(f, 0)
 }

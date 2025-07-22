@@ -87,7 +87,7 @@ func (s *Suite) TestThreadYield(assert *require.Assertions, t *testing.T) {
 	t.Cleanup(L.Close)
 
 	// FIXME: fatal error: exitsyscall: syscall frame is no longer valid
-	L.PushCFunction(func(L *lua.State) int {
+	L.PushGoFunction(func(L *lua.State) int {
 		n := L.CheckInteger(1)
 		var (
 			a = int64(0)

@@ -63,7 +63,7 @@ func (s *Suite) TestTypeToCFunction(assert *require.Assertions, L *lua.State) {
 		return 1
 	}
 
-	L.PushCFunction(testCFunc)
+	L.PushGoFunction(testCFunc)
 
 	assert.True(L.IsCFunction(-1))
 	assert.Equal(lua.LUA_TFUNCTION, L.Type(-1))
@@ -147,14 +147,14 @@ func (s *Suite) TestTypeToRawLen(assert *require.Assertions, L *lua.State) {
 func (s *Suite) TestFunction(assert *require.Assertions, L *lua.State) {
 	assert.Equal(fmt.Sprintf("%.0f", L.Version()), "504")
 
-	L.PushCFunction(func(L *lua.State) int {
+	L.PushGoFunction(func(L *lua.State) int {
 		number := L.ToNumber(1)
 		assert.Equal(number, 42.0)
 		return 0
 	})
 	assert.NoError(L.SetGlobal("print_number"))
 
-	L.PushCFunction(func(L *lua.State) int {
+	L.PushGoFunction(func(L *lua.State) int {
 		x := L.CheckNumber(1)
 		L.PushNumber(x * 2)
 		return 1
@@ -287,7 +287,7 @@ func (s *Suite) TestCheckType(assert *require.Assertions, L *lua.State) {
 	L.CheckType(-1, lua.LUA_TNIL)
 	L.Pop(1)
 
-	L.PushCFunction(func(L *lua.State) int { return 0 })
+	L.PushGoFunction(func(L *lua.State) int { return 0 })
 	L.CheckType(-1, lua.LUA_TFUNCTION)
 	L.Pop(1)
 
@@ -323,7 +323,7 @@ func (s *Suite) TestCheckAny(assert *require.Assertions, L *lua.State) {
 	L.CheckAny(-1)
 	L.Pop(1)
 
-	L.PushCFunction(func(L *lua.State) int { return 0 })
+	L.PushGoFunction(func(L *lua.State) int { return 0 })
 	L.CheckAny(-1)
 	L.Pop(1)
 
