@@ -469,18 +469,18 @@ func (s *Suite) TestTableMeta(assert *require.Assertions, L *lua.State) {
 	})
 	L.SetTable(mtIdx)
 
-	L.SetMetaTable(tblIdx)
+	L.SetIMetaTable(tblIdx)
 	L.PushValue(tblIdx)
-	assert.Equal(1, L.GetMetaTable(-1))
+	assert.Equal(1, L.GeIMetaTable(-1))
 	assert.Equal(lua.LUA_TTABLE, L.Type(-1))
 	L.Pop(2)
 
-	assert.Equal(1, L.GetMetaTable(tblIdx))
-	typ, err := L.LGetMetaField(tblIdx, "__call")
+	assert.Equal(1, L.GeIMetaTable(tblIdx))
+	typ, err := L.GetMetaField(tblIdx, "__call")
 	assert.NoError(err)
 	assert.Equal(lua.LUA_TFUNCTION, typ)
 
-	has, err := L.LCallMeta(tblIdx, "__call")
+	has, err := L.CallMeta(tblIdx, "__call")
 	assert.NoError(err)
 	assert.True(has)
 	assert.Equal(lua.LUA_TSTRING, L.Type(-1))
@@ -488,12 +488,12 @@ func (s *Suite) TestTableMeta(assert *require.Assertions, L *lua.State) {
 
 	L.SetTop(tblIdx)
 
-	has, err = L.LNewMetaTable("mt")
+	has, err = L.NewMetaTable("mt")
 	assert.NoError(err)
 	assert.False(has)
 	L.Pop(1)
 
-	has, err = L.LNewMetaTable("mt")
+	has, err = L.NewMetaTable("mt")
 	assert.NoError(err)
 	assert.True(has)
 	L.PushString("__call")
@@ -504,19 +504,19 @@ func (s *Suite) TestTableMeta(assert *require.Assertions, L *lua.State) {
 	L.SetTable(-3)
 	L.SetTop(tblIdx)
 
-	assert.NoError(L.LSetMetaTable("mt"))
-	typ, err = L.LGetMetaField(tblIdx, "__call")
+	assert.NoError(L.SetMetaTable("mt"))
+	typ, err = L.GetMetaField(tblIdx, "__call")
 	assert.NoError(err)
 	assert.Equal(lua.LUA_TFUNCTION, typ)
 
-	typ, err = L.LGetMetaTable("mt")
+	typ, err = L.GetMetaTable("mt")
 	assert.NoError(err)
 	assert.Equal(lua.LUA_TTABLE, typ)
-	typ, err = L.LGetMetaTable("non_existent")
+	typ, err = L.GetMetaTable("non_existent")
 	assert.NoError(err)
 	assert.Equal(lua.LUA_TNIL, typ)
 
-	has, err = L.LCallMeta(tblIdx, "__call")
+	has, err = L.CallMeta(tblIdx, "__call")
 	assert.NoError(err)
 	assert.True(has)
 	assert.Equal(lua.LUA_TSTRING, L.Type(-1))

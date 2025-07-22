@@ -90,15 +90,15 @@ func (s *State) Next(idx int) bool {
 	return s.ffi.LuaNext(s.luaL, idx) != 0
 }
 
-func (s *State) GetMetaTable(index int) int {
+func (s *State) GeIMetaTable(index int) int {
 	return s.ffi.LuaGetmetatable(s.luaL, index)
 }
 
-func (s *State) SetMetaTable(index int) int {
+func (s *State) SetIMetaTable(index int) int {
 	return s.ffi.LuaSetmetatable(s.luaL, index)
 }
 
-func (s *State) LNewMetaTable(tname string) (has bool, err error) {
+func (s *State) NewMetaTable(tname string) (has bool, err error) {
 	p, err := tools.BytePtrFromString(tname)
 	if err != nil {
 		return
@@ -107,7 +107,7 @@ func (s *State) LNewMetaTable(tname string) (has bool, err error) {
 	return
 }
 
-func (s *State) LSetMetaTable(tname string) (err error) {
+func (s *State) SetMetaTable(tname string) (err error) {
 	p, err := tools.BytePtrFromString(tname)
 	if err != nil {
 		return
@@ -116,11 +116,11 @@ func (s *State) LSetMetaTable(tname string) (err error) {
 	return
 }
 
-func (s *State) LGetMetaTable(tname string) (typ int, err error) {
+func (s *State) GetMetaTable(tname string) (typ int, err error) {
 	return s.GetField(LUA_REGISTRYINDEX, tname)
 }
 
-func (s *State) LGetMetaField(obj int, e string) (typ int, err error) {
+func (s *State) GetMetaField(obj int, e string) (typ int, err error) {
 	p, err := tools.BytePtrFromString(e)
 	if err != nil {
 		return
@@ -129,7 +129,7 @@ func (s *State) LGetMetaField(obj int, e string) (typ int, err error) {
 	return
 }
 
-func (s *State) LCallMeta(obj int, e string) (has bool, err error) {
+func (s *State) CallMeta(obj int, e string) (has bool, err error) {
 	p, err := tools.BytePtrFromString(e)
 	if err != nil {
 		return

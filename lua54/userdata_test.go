@@ -82,9 +82,9 @@ func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {
 	udIdx = L.GetTop()
 	mtName := "MyMeta"
 	L.NewTable()
-	L.SetMetaTable(udIdx)
-	L.LNewMetaTable(mtName)
-	L.SetMetaTable(udIdx)
+	L.SetIMetaTable(udIdx)
+	L.NewMetaTable(mtName)
+	L.SetIMetaTable(udIdx)
 
 	ptr, err := L.CheckUserData(udIdx, mtName)
 	assert.NoError(err)
@@ -95,7 +95,7 @@ func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {
 	assert.Equal(ptr, ptr)
 
 	L.NewTable()
-	L.SetMetaTable(udIdx)
+	L.SetIMetaTable(udIdx)
 	ptr, err = L.TestUserData(udIdx, mtName)
 	assert.NoError(err)
 	assert.Nil(ptr)
@@ -138,7 +138,7 @@ func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {
 		}
 	})
 	L.SetTable(-3)
-	L.SetMetaTable(-2)
+	L.SetIMetaTable(-2)
 
 	L.SetGlobal("userDataTest")
 
