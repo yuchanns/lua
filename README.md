@@ -54,6 +54,8 @@ func main() {
 	}
 	defer L.Close()
 
+	L.OpenLibs()
+
 	// Load a Lua script
 	if err := L.DoString(`print("Hello, Lua!")`); err != nil {
 		fmt.Println("Error:", err)
