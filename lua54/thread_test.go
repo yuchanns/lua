@@ -1,6 +1,8 @@
 package lua_test
 
 import (
+	"runtime"
+	"testing"
 	"unsafe"
 
 	"github.com/stretchr/testify/require"
@@ -79,7 +81,18 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 	assert.Error(err)
 }
 
-func (s *Suite) TestThreadYield(assert *require.Assertions, L *lua.State) {
+func (s *Suite) TestThreadYield(assert *require.Assertions, t *testing.T) {
+	t.Logf("GOOS: %s", runtime.GOOS)
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping test on Windows as Yield is not supported now.")
+	}
+
+	L, err := s.lib.NewState()
+	assert.NoError(err)
+	t.Cleanup(L.Close)
+
+	L.OpenLibs()
+
 	type fibContext struct {
 		a int64
 		b int64
