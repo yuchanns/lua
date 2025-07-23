@@ -96,7 +96,7 @@ func (s *Suite) TestThreadYield(assert *require.Assertions, L *lua.State) {
 		L.PushInteger(fc.a)
 		fc.a, fc.b = fc.b, fc.a+fc.b
 		fc.i++
-		assert.NoError(L.YieldK(1, unsafe.Pointer(fc), fibCont))
+		assert.NoError(L.YieldK(0, unsafe.Pointer(fc), fibCont))
 		return 0
 	}
 	var fib lua.GoFunc = func(L *lua.State) int {
@@ -111,7 +111,7 @@ func (s *Suite) TestThreadYield(assert *require.Assertions, L *lua.State) {
 		fc.n = n
 		fc.i = 1
 		L.PushInteger(a)
-		assert.NoError(L.YieldK(1, unsafe.Pointer(fc), fibCont))
+		assert.NoError(L.YieldK(0, unsafe.Pointer(fc), fibCont))
 		return 0
 	}
 	L.PushGoFunction(fib)
