@@ -80,14 +80,6 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 }
 
 func (s *Suite) TestThreadYield(assert *require.Assertions, L *lua.State) {
-	defer func() {
-		if r := recover(); r != nil {
-			// FIXME: This is a hack to make sure the test complete.
-			// otherwise, an error will be raised:
-			// fatal error: exitsyscall: syscall frame is no longer valid
-		}
-	}()
-
 	type fibContext struct {
 		a int64
 		b int64
@@ -99,7 +91,7 @@ func (s *Suite) TestThreadYield(assert *require.Assertions, L *lua.State) {
 	fibCont = func(L *lua.State, status int, ctx unsafe.Pointer) int {
 		fc := (*fibContext)(ctx)
 		if fc.i > fc.n {
-			panic("fatal error: exitsyscall: syscall frame is no longer valid")
+			return 0
 		}
 		L.PushInteger(fc.a)
 		fc.a, fc.b = fc.b, fc.a+fc.b
