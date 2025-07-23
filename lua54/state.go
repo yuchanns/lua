@@ -123,6 +123,17 @@ func (s *State) SetGlobal(name string) (err error) {
 	return
 }
 
+// GetGlobal retrieves a global variable from the Lua environment and pushes it onto the stack.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_getglobal
+func (s *State) GetGlobal(name string) (err error) {
+	n, err := tools.BytePtrFromString(name)
+	if err != nil {
+		return
+	}
+	s.ffi.LuaGetglobal(s.luaL, n)
+	return
+}
+
 // Load loads a Lua chunk from an io.Reader, compiling but not executing the code. This mirrors lua_load.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_load
 func (s *State) Load(r io.Reader, chunkname string, mode ...string) (err error) {

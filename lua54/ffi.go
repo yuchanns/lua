@@ -116,6 +116,7 @@ type ffi struct {
 	LuaLCheckudata   func(L unsafe.Pointer, ud int, tname *byte) unsafe.Pointer `ffi:"luaL_checkudata"`
 	LuaLTestudata    func(L unsafe.Pointer, ud int, tname *byte) unsafe.Pointer `ffi:"luaL_testudata"`
 
+	LuaGetglobal func(L unsafe.Pointer, name *byte) int32                                                     `ffi:"lua_getglobal"`
 	LuaSetglobal func(L unsafe.Pointer, name *byte)                                                           `ffi:"lua_setglobal"`
 	LuaCallk     func(L unsafe.Pointer, nargs, nresults int, ctx unsafe.Pointer, k LuaKFunction)              `ffi:"lua_callk"`
 	LuaPcallk    func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx unsafe.Pointer, k LuaKFunction) int `ffi:"lua_pcallk"`

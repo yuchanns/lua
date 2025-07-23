@@ -477,3 +477,14 @@ func (s *Suite) TestCall(assert *require.Assertions, L *lua.State) {
 	assert.Equal("normal execution", L.ToString(-1))
 	L.Pop(1)
 }
+
+func (s *Suite) TestGlobal(assert *require.Assertions, L *lua.State) {
+	key, val := "global_var", "global_value"
+	_, err := L.PushString(val)
+	assert.NoError(err)
+	assert.NoError(L.SetGlobal(key))
+
+	assert.NoError(L.GetGlobal(key))
+	assert.True(L.IsString(-1))
+	assert.Equal(val, L.ToString(-1))
+}
