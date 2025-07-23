@@ -1,4 +1,9 @@
-local co = coroutine.create(function() fib(10) end)
+local co = coroutine.create(function()
+  fib(10)
+end)
 while coroutine.status(co) ~= "dead" do
-  print(coroutine.resume(co))
+  local _, yield = coroutine.resume(co)
+  if yield then
+    print("resume from lua: " .. yield)
+  end
 end

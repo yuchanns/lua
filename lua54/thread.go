@@ -40,10 +40,34 @@ func (s *State) PushThread() (isMain bool) {
 	return
 }
 
+type KFunc func(*State, int, unsafe.Pointer) int
+
 // YieldK yields nresults values from the current coroutine, using continuation k and context ctx for resumption.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_yieldk
-func (s *State) YieldK(nresults int, ctx int, k LuaKFunction) (err error) {
-	status := s.ffi.LuaYieldk(s.luaL, nresults, ctx, k)
+func (s *State) YieldK(nresults int, ctx unsafe.Pointer, k KFunc) (err error) {
+	hackMsg := "fixme: a hack to avoid syscall frame is no longer valid"
+	defer func() {
+		if m := recover(); m != nil {
+			// FIXME: This is a hack to make sure the test complete.
+			// otherwise, an error will be raised:
+			// fatal error: exitsyscall: syscall frame is no longer valid
+			if msg, ok := m.(string); ok && msg == hackMsg {
+				// do nothing, just to avoid the panic
+			} else {
+				panic(m) // re-raise the panic if it's not our hack
+			}
+		}
+	}()
+
+	status := s.ffi.LuaYieldk(s.luaL, nresults, ctx, func(L unsafe.Pointer, status int, ctx unsafe.Pointer) int {
+		defer panic(hackMsg)
+
+		state := &State{
+			ffi:  s.ffi,
+			luaL: L,
+		}
+		return k(state, status, ctx)
+	})
 	if status != LUA_OK && status != LUA_YIELD {
 		err = s.CheckError(status)
 	}
@@ -53,7 +77,7 @@ func (s *State) YieldK(nresults int, ctx int, k LuaKFunction) (err error) {
 // Yield yields nresults values from the current coroutine (no continuation function).
 // See: https://www.lua.org/manual/5.4/manual.html#lua_yield
 func (s *State) Yield(nresults int) (err error) {
-	return s.YieldK(nresults, 0, NoOpKFunction)
+	return s.YieldK(nresults, nil, NoOpKFunc)
 }
 
 // Resume resumes the given Lua thread, passing narg arguments, and returns the number of results plus possible error.

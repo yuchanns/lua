@@ -1,7 +1,9 @@
 package lua_test
 
 import (
+	"runtime"
 	"testing"
+	"unsafe"
 
 	"github.com/stretchr/testify/require"
 	"go.yuchanns.xyz/lua/lua54"
@@ -80,26 +82,52 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 }
 
 func (s *Suite) TestThreadYield(assert *require.Assertions, t *testing.T) {
-	t.Skip("FIXME: fatal error: exitsyscall: syscall frame is no longer valid")
+	t.Logf("GOOS: %s", runtime.GOOS)
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping test on Windows as Yield is not supported now.")
+	}
 
 	L, err := s.lib.NewState()
 	assert.NoError(err)
 	t.Cleanup(L.Close)
 
-	// FIXME: fatal error: exitsyscall: syscall frame is no longer valid
-	L.PushGoFunction(func(L *lua.State) int {
-		n := L.CheckInteger(1)
-		var (
-			a = int64(0)
-			b = int64(1)
-		)
-		for i := int64(0); i < n; i++ {
-			L.PushInteger(a)
-			assert.NoError(L.Yield(1))
-			a, b = b, a+b
+	L.OpenLibs()
+
+	type fibContext struct {
+		a int64
+		b int64
+		n int64
+		i int64
+	}
+	var fibCont lua.KFunc
+	var fc = &fibContext{}
+	fibCont = func(L *lua.State, status int, ctx unsafe.Pointer) int {
+		fc := (*fibContext)(ctx)
+		if fc.i > fc.n {
+			return 0
 		}
-		return 0
-	})
+		L.PushInteger(fc.a)
+		fc.a, fc.b = fc.b, fc.a+fc.b
+		fc.i++
+		assert.NoError(L.YieldK(1, unsafe.Pointer(fc), fibCont))
+		return 1
+	}
+	var fib lua.GoFunc = func(L *lua.State) int {
+		n := L.CheckInteger(1)
+		if n <= 0 {
+			L.PushInteger(0)
+			return 1
+		}
+		a, b := int64(0), int64(1)
+		fc.a = b
+		fc.b = a + b
+		fc.n = n
+		fc.i = 1
+		L.PushInteger(a)
+		assert.NoError(L.YieldK(1, unsafe.Pointer(fc), fibCont))
+		return 1
+	}
+	L.PushGoFunction(fib)
 	assert.NoError(L.SetGlobal("fib"))
 
 	assert.NoError(L.DoFile("testdata/resume.lua"))

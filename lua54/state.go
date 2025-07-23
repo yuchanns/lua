@@ -63,11 +63,11 @@ func (s *State) Close() {
 	s.refAlloc = nil
 }
 
-type CFunc func(L *State) int
+type GoFunc func(L *State) int
 
 // AtPanic sets a Go function as the Lua panic handler for this state, returning the old panic handler.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_atpanic
-func (s *State) AtPanic(fn CFunc) (old CFunc) {
+func (s *State) AtPanic(fn GoFunc) (old GoFunc) {
 	panicf := func(L unsafe.Pointer) int {
 		state := &State{
 			ffi:  s.ffi,
@@ -247,12 +247,12 @@ func (s *State) LoadFile(filename string) (err error) {
 // PCall calls a Lua function in protected mode, with argument and result counts. If errors occur, they are returned.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pcall
 func (s *State) PCall(nargs, nresults, errfunc int) (err error) {
-	return s.PCallK(nargs, nresults, errfunc, 0, NoOpKFunction)
+	return s.PCallK(nargs, nresults, errfunc, nil, NoOpKFunction)
 }
 
 // PCallK is like PCall but with full support for Lua continuation functions and execution contexts. Used for advanced coroutine yield/resume situations.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pcallk
-func (s *State) PCallK(nargs, nresults, errfunc int, ctx int, k LuaKFunction) (err error) {
+func (s *State) PCallK(nargs, nresults, errfunc int, ctx unsafe.Pointer, k LuaKFunction) (err error) {
 	err = s.CheckError(s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, k))
 	return
 }
@@ -260,11 +260,11 @@ func (s *State) PCallK(nargs, nresults, errfunc int, ctx int, k LuaKFunction) (e
 // Call invokes a Lua function (not in protected mode) with given arg and result counts. Panics on error.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_call
 func (s *State) Call(nargs, nresults int) {
-	s.CallK(nargs, nresults, 0, NoOpKFunction)
+	s.CallK(nargs, nresults, nil, NoOpKFunction)
 }
 
 // CallK calls a Lua function with the given continuation and context, supporting advanced coroutine control.
-func (s *State) CallK(nargs, nresults, ctx int, k LuaKFunction) {
+func (s *State) CallK(nargs, nresults int, ctx unsafe.Pointer, k LuaKFunction) {
 	s.ffi.LuaCallk(s.luaL, nargs, nresults, ctx, k)
 }
 
@@ -282,6 +282,10 @@ func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 	}, ud)
 }
 
-var NoOpKFunction LuaKFunction = func(_ unsafe.Pointer, _ int, _ int) int {
+var NoOpKFunction LuaKFunction = func(_ unsafe.Pointer, _ int, _ unsafe.Pointer) int {
+	return 0
+}
+
+var NoOpKFunc KFunc = func(_ *State, _ int, _ unsafe.Pointer) int {
 	return 0
 }
