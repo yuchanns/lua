@@ -4,7 +4,7 @@ import (
 	"unsafe"
 
 	"github.com/stretchr/testify/require"
-	"go.yuchanns.xyz/lua/lua54"
+	"go.yuchanns.xyz/lua"
 )
 
 func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {

@@ -6,7 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/stretchr/testify/require"
-	"go.yuchanns.xyz/lua/lua54"
+	"go.yuchanns.xyz/lua"
 )
 
 type testObject struct {

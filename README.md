@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"os"
 
-	"go.yuchanns.xyz/lua/lua54"
+	"go.yuchanns.xyz/lua"
 )
 
 //go:embed liblua54.so

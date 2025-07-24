@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.yuchanns.xyz/lua"
 	"go.yuchanns.xyz/lua/internal/tools"
-	"go.yuchanns.xyz/lua/lua54"
 )
 
 type Suite struct {
