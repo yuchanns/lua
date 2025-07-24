@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        version: ["5.4"]
+        version: ["5.4", "5.3"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -50,3 +50,4 @@ jobs:
           go test -v ./...
         env:
           CGO_ENABLE: 0 # Disable CGO to ensure pure Go tests
+          LUA_VERSION: ${{ steps.module.outputs.version }}

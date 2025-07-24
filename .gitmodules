@@ -1,3 +1,6 @@
 [submodule "pkgs/lua54"]
 	path = pkgs/lua54
 	url = https://github.com/lua/lua.git
+[submodule "pkgs/lua53"]
+	path = pkgs/lua53
+	url = https://github.com/lua/lua

@@ -68,6 +68,8 @@ endef
 
 # Define Lua 5.4
 $(eval $(call define_lua_version,54,54))
+# Define Lua 5.3
+$(eval $(call define_lua_version,53,53))
 
 # =============================================================================
 # COMMON BUILD FUNCTIONS
@@ -113,6 +115,9 @@ endef
 # Generate build rules for Lua 5.4
 $(eval $(call define_lua_build_rules,54))
 
+# Generate build rules for Lua 5.3
+$(eval $(call define_lua_build_rules,53))
+
 # =============================================================================
 # MAIN TARGETS
 # =============================================================================
@@ -120,16 +125,17 @@ $(eval $(call define_lua_build_rules,54))
 .PHONY: all clean help
 
 # Default target
-all: lua54
+all: lua54 lua53
 
 # Global clean target
-clean: clean-54
+clean: clean-54 clean-53
 	@echo "Cleaned all build artifacts"
 
 # Help target
 help:
 	@echo "Available targets:"
 	@echo "  lua54    - Build Lua 5.4 dynamic library for testing"
+	@echo "  lua53    - Build Lua 5.3 dynamic library for testing"
 	@echo "  clean       - Remove build artifacts and .lua directory"
 	@echo "  help        - Show this help message"
 

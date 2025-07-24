@@ -14,19 +14,22 @@ func (s *Suite) TestThread(assert *require.Assertions, L *lua.State) {
 	assert.NotNil(co)
 	assert.Equal(0, co.GetTop())
 
-	err := co.CloseThread(L)
-	assert.NoError(err)
+	if L.Version() >= 504 {
+		assert.NoError(co.CloseThread(L))
+	}
 
 	assert.True(L.PushThread())
 	L.Pop(1)
 
 	assert.False(co.PushThread())
-	assert.NoError(co.CloseThread(L))
+	if L.Version() >= 504 {
+		assert.NoError(co.CloseThread(L))
+		assert.True(co.IsYieldable())
+	}
 
 	assert.Equal(lua.LUA_OK, co.Status())
 
 	assert.False(L.IsYieldable())
-	assert.True(co.IsYieldable())
 }
 
 func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
@@ -38,26 +41,47 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 
 	retc, err := co.Resume(L, 0)
 	assert.NoError(err)
-	assert.EqualValues(1, retc)
-	assert.EqualValues(1, co.ToNumber(-1))
-	co.Pop(1)
+	if L.Version() >= 504 {
+		assert.EqualValues(1, retc)
+		assert.EqualValues(1, co.ToNumber(-1))
+		co.Pop(1)
+	} else {
+		assert.EqualValues(1, co.GetTop())
+		assert.EqualValues(1, co.ToNumber(-1))
+		co.Pop(1)
+	}
 
 	retc, err = co.Resume(L, 0)
 	assert.NoError(err)
-	assert.EqualValues(1, retc)
-	assert.EqualValues(2, co.ToNumber(-1))
-	co.Pop(1)
+	if L.Version() >= 504 {
+		assert.EqualValues(1, retc)
+		assert.EqualValues(2, co.ToNumber(-1))
+		co.Pop(1)
+	} else {
+		assert.EqualValues(1, co.GetTop())
+		assert.EqualValues(2, co.ToNumber(-1))
+		co.Pop(1)
+	}
 
 	retc, err = co.Resume(L, 0)
 	assert.NoError(err)
-	assert.EqualValues(1, retc)
-	assert.EqualValues(99, co.ToNumber(-1))
+	if L.Version() >= 504 {
+		assert.EqualValues(1, retc)
+		assert.EqualValues(99, co.ToNumber(-1))
+	} else {
+		assert.EqualValues(1, co.GetTop())
+		assert.EqualValues(99, co.ToNumber(-1))
+	}
 	co.Pop(1)
 
 	_, err = co.Resume(L, 0)
 	assert.Error(err)
 
-	assert.NoError(co.CloseThread(L))
+	if L.Version() >= 504 {
+		assert.NoError(co.CloseThread(L))
+	} else {
+		co = L.NewThread()
+	}
 
 	err = co.DoFile("testdata/yield_and_sum.lua")
 	assert.NoError(err)
@@ -66,16 +90,29 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 
 	nres, err := co.Resume(L, 1)
 	assert.NoError(err)
-	assert.EqualValues(2, nres)
-	assert.EqualValues(3, co.ToNumber(-2))
-	assert.EqualValues(9, co.ToNumber(-1))
-	co.Pop(2)
+	if L.Version() >= 504 {
+		assert.EqualValues(2, nres)
+		assert.EqualValues(3, co.ToNumber(-2))
+		assert.EqualValues(9, co.ToNumber(-1))
+		co.Pop(2)
+	} else {
+		assert.EqualValues(2, co.GetTop())
+		assert.EqualValues(3, co.ToNumber(-2))
+		assert.EqualValues(9, co.ToNumber(-1))
+		co.Pop(2)
+	}
 
 	nres, err = co.Resume(L, 0)
 	assert.NoError(err)
-	assert.EqualValues(1, nres)
-	assert.EqualValues(6, co.ToNumber(-1))
-	co.Pop(1)
+	if L.Version() >= 504 {
+		assert.EqualValues(1, nres)
+		assert.EqualValues(6, co.ToNumber(-1))
+		co.Pop(1)
+	} else {
+		assert.EqualValues(1, co.GetTop())
+		assert.EqualValues(6, co.ToNumber(-1))
+		co.Pop(1)
+	}
 
 	_, err = co.Resume(L, 0)
 	assert.Error(err)

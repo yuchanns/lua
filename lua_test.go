@@ -1,6 +1,7 @@
 package lua_test
 
 import (
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -15,7 +16,11 @@ type Suite struct {
 }
 
 func (s *Suite) Setup() (err error) {
-	path, err := tools.FindLocalLuaLibrary("54")
+	version := os.Getenv("LUA_VERSION")
+	if version == "" {
+		version = "54"
+	}
+	path, err := tools.FindLocalLuaLibrary(version)
 	if err != nil {
 		return
 	}
@@ -73,6 +78,12 @@ func TestSuite(t *testing.T) {
 	assert.NoError(suite.Setup())
 
 	t.Cleanup(suite.TearDown)
+
+	L, err := suite.lib.NewState()
+	assert.NoError(err)
+	t.Cleanup(L.Close)
+
+	t.Logf("Running tests for lua version %v", L.Version())
 
 	tt := reflect.TypeOf(suite)
 	for i := range tt.NumMethod() {
