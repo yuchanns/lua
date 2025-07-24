@@ -105,11 +105,10 @@ func (s *State) CheckError(status int) error {
 
 // Errorf raises a formatted Lua error from the Go side, pushing the error onto the Lua stack.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_error
-func (s *State) Errorf(format string, args ...any) {
+func (s *State) Errorf(format string, args ...any) int {
 	msg := fmt.Sprintf(format, args...)
 	b, _ := tools.BytePtrFromString(msg)
-	s.ffi.LuaLError(s.luaL, b)
-	return
+	return s.ffi.LuaLError(s.luaL, b)
 }
 
 // SetGlobal sets a global variable in the Lua environment using the value at the top of the stack.
