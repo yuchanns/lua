@@ -86,7 +86,7 @@ func (s *State) AtPanic(fn GoFunc) (old GoFunc) {
 // Version returns the current version of the Lua runtime loaded in this state.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_version
 func (s *State) Version() float64 {
-	return s.ffi.LuaVersion(s.luaL)
+	return s.ffi.version
 }
 
 // CheckError transforms a Lua C API error code into a Go error,

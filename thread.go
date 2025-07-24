@@ -15,6 +15,7 @@ func (s *State) NewThread() *State {
 
 // CloseThread closes the specified Lua thread (or the currently running thread if from is nil).
 // Returns an error if closing fails.
+// Available since Lua 5.4.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_closethread
 func (s *State) CloseThread(from *State) (err error) {
 	var fromL unsafe.Pointer
@@ -26,6 +27,7 @@ func (s *State) CloseThread(from *State) (err error) {
 }
 
 // ResetThread is equivalent to CloseThread with from being nil.
+// Available since Lua 5.4.
 // Deprecated: use CloseThread(nil) instead.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_resetthread
 func (s *State) ResetThread() (err error) {
@@ -80,14 +82,20 @@ func (s *State) Yield(nresults int) (err error) {
 	return s.YieldK(nresults, nil, NoOpKFunc)
 }
 
-// Resume resumes the given Lua thread, passing narg arguments, and returns the number of results plus possible error.
+// Resume resumes the given Lua thread, passing narg arguments, and returns possible error.
+// Available since lua5.4: return the number of results
 // See: https://www.lua.org/manual/5.4/manual.html#lua_resume
 func (s *State) Resume(from *State, narg int) (nres int32, err error) {
 	var fromL unsafe.Pointer
 	if from != nil {
 		fromL = from.luaL
 	}
-	status := s.ffi.LuaResume(s.luaL, fromL, narg, unsafe.Pointer(&nres))
+	var status int
+	if s.ffi.version >= 504 {
+		status = s.ffi.LuaResume(s.luaL, fromL, narg, unsafe.Pointer(&nres))
+	} else {
+		status = s.ffi.LuaResume503(s.luaL, fromL, narg)
+	}
 	if status != LUA_OK && status != LUA_YIELD {
 		err = s.CheckError(status)
 	}

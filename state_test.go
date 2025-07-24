@@ -6,8 +6,8 @@ import (
 	"unsafe"
 
 	"github.com/stretchr/testify/require"
+	"go.yuchanns.xyz/lua"
 	"go.yuchanns.xyz/lua/internal/tools"
-	"go.yuchanns.xyz/lua/lua54"
 )
 
 func (s *Suite) TestAllocTracking(assert *require.Assertions, t *testing.T) {

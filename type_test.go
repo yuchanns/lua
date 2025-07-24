@@ -1,12 +1,11 @@
 package lua_test
 
 import (
-	"fmt"
 	"math"
 	"unsafe"
 
 	"github.com/stretchr/testify/require"
-	"go.yuchanns.xyz/lua/lua54"
+	"go.yuchanns.xyz/lua"
 )
 
 type testObject struct {
@@ -15,7 +14,6 @@ type testObject struct {
 }
 
 func (s *Suite) TestTypeLightUserData(assert *require.Assertions, L *lua.State) {
-
 	var testVar = &testObject{id: 123}
 	testVar.data[0] = 42
 	err := L.PushLightUserData(testVar)
@@ -145,8 +143,6 @@ func (s *Suite) TestTypeToRawLen(assert *require.Assertions, L *lua.State) {
 }
 
 func (s *Suite) TestFunction(assert *require.Assertions, L *lua.State) {
-	assert.Equal(fmt.Sprintf("%.0f", L.Version()), "504")
-
 	L.PushGoFunction(func(L *lua.State) int {
 		number := L.ToNumber(1)
 		assert.Equal(number, 42.0)
