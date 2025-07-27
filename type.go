@@ -172,15 +172,15 @@ func (s *State) CheckInteger(idx int) int64 {
 	return s.ffi.LuaLCheckinteger(s.luaL, idx)
 }
 
+func (s *State) CheckString(idx int) string {
+	return tools.BytePtrToString(s.ffi.LuaLChecklstring(s.luaL, idx, nil))
+}
+
 // CheckLString checks whether the value at idx is a string, optionally returns its length, and returns the Go string.
 // Raises an error if not string.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_checklstring
 func (s *State) CheckLString(idx int, size int) string {
-	p := s.ffi.LuaLChecklstring(s.luaL, idx, unsafe.Pointer(&size))
-	if p == nil {
-		return ""
-	}
-	return tools.BytePtrToString(p)
+	return tools.BytePtrToString(s.ffi.LuaLChecklstring(s.luaL, idx, unsafe.Pointer(&size)))
 }
 
 // CheckType checks whether the value at idx has the given type, raising error if not.
