@@ -44,22 +44,22 @@ type KFunc func(*State, int, unsafe.Pointer) int
 // YieldK yields nresults values from the current coroutine, using continuation k and context ctx for resumption.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_yieldk
 func (s *State) YieldK(nresults int, ctx unsafe.Pointer, k KFunc) (err error) {
-	hackMsg := "fixme: a hack to avoid syscall frame is no longer valid"
-	defer func() {
-		if m := recover(); m != nil {
-			// FIXME: This is a hack to make sure the test complete.
-			// otherwise, an error will be raised:
-			// fatal error: exitsyscall: syscall frame is no longer valid
-			if msg, ok := m.(string); ok && msg == hackMsg {
-				// do nothing, just to avoid the panic
-			} else {
-				panic(m) // re-raise the panic if it's not our hack
+	protectionMsg := "unwinding protection"
+	if s.unwindingProtection {
+		defer func() {
+			if m := recover(); m != nil {
+				if msg, ok := m.(string); !ok || msg != protectionMsg {
+					panic(m) // re-raise the panic if it's not our hack
+				}
 			}
-		}
-	}()
+		}()
+	}
 
 	status := s.ffi.LuaYieldk(s.luaL, nresults, ctx, func(L unsafe.Pointer, status int, ctx unsafe.Pointer) int {
-		defer panic(hackMsg)
+		if s.unwindingProtection {
+			// Use panic instead of setjmp/longjmp to avoid issues with syscall frames
+			defer panic(protectionMsg)
+		}
 
 		state := s.clone(L)
 		return k(state, status, ctx)
