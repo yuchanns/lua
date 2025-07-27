@@ -7,10 +7,7 @@ import "unsafe"
 func (s *State) NewThread() *State {
 	L := s.ffi.LuaNewthread(s.luaL)
 
-	return &State{
-		ffi:  s.ffi,
-		luaL: L,
-	}
+	return s.clone(L)
 }
 
 // CloseThread closes the specified Lua thread (or the currently running thread if from is nil).
@@ -47,27 +44,24 @@ type KFunc func(*State, int, unsafe.Pointer) int
 // YieldK yields nresults values from the current coroutine, using continuation k and context ctx for resumption.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_yieldk
 func (s *State) YieldK(nresults int, ctx unsafe.Pointer, k KFunc) (err error) {
-	hackMsg := "fixme: a hack to avoid syscall frame is no longer valid"
-	defer func() {
-		if m := recover(); m != nil {
-			// FIXME: This is a hack to make sure the test complete.
-			// otherwise, an error will be raised:
-			// fatal error: exitsyscall: syscall frame is no longer valid
-			if msg, ok := m.(string); ok && msg == hackMsg {
-				// do nothing, just to avoid the panic
-			} else {
-				panic(m) // re-raise the panic if it's not our hack
+	protectionMsg := "unwinding protection"
+	if s.unwindingProtection {
+		defer func() {
+			if m := recover(); m != nil {
+				if msg, ok := m.(string); !ok || msg != protectionMsg {
+					panic(m) // re-raise the panic if it's not our hack
+				}
 			}
-		}
-	}()
+		}()
+	}
 
 	status := s.ffi.LuaYieldk(s.luaL, nresults, ctx, func(L unsafe.Pointer, status int, ctx unsafe.Pointer) int {
-		defer panic(hackMsg)
-
-		state := &State{
-			ffi:  s.ffi,
-			luaL: L,
+		if s.unwindingProtection {
+			// Use panic instead of setjmp/longjmp to avoid issues with syscall frames
+			defer panic(protectionMsg)
 		}
+
+		state := s.clone(L)
 		return k(state, status, ctx)
 	})
 	if status != LUA_OK && status != LUA_YIELD {
@@ -118,8 +112,5 @@ func (s *State) IsYieldable() bool {
 // See: https://www.lua.org/manual/5.4/manual.html#lua_tothread
 func (s *State) ToThread(idx int) *State {
 	L := s.ffi.LuaTothread(s.luaL, idx)
-	return &State{
-		ffi:  s.ffi,
-		luaL: L,
-	}
+	return s.clone(L)
 }

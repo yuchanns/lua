@@ -46,10 +46,7 @@ func (l *Lib) NewState(o ...stateOptFunc) (state *State, err error) {
 		return nil, fmt.Errorf("Lua library is closed")
 	}
 
-	var opt *stateOpt
-	if len(o) > 0 {
-		opt = &stateOpt{}
-	}
+	opt := &stateOpt{}
 	for _, fn := range o {
 		fn(opt)
 	}
@@ -75,5 +72,15 @@ func WithAlloc[T any](
 			return fn(t, ptr, osize, nsize)
 		}
 		o.userData = unsafe.Pointer(ud)
+	}
+}
+
+// WithoutUnwindingProtection indicates whether this state is created without goroutine stack
+// unwinding protected mode. Lua use `setjmp/longjmp` to handle errors, which is not
+// compatible with Go's goroutine stack unwinding and will cause syscall frames no longer
+// available on callback to Go code.
+func WithoutUnwindingProtection() stateOptFunc {
+	return func(o *stateOpt) {
+		o.withoutUwindingProtection = true
 	}
 }

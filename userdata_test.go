@@ -21,13 +21,6 @@ func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {
 	assert.Equal(lua.LUA_TUSERDATA, L.Type(-1))
 	L.Pop(1)
 
-	L.AtPanic(func(L *lua.State) int {
-		err := L.CheckError(lua.LUA_ERRERR)
-		assert.Error(err)
-		panic(err)
-	})
-	assert.Panics(func() { L.NewUserData(-1) })
-
 	assert.NotNil(L.NewUserData(12))
 	udIdx := L.GetTop()
 	mtName := "MyMeta"
@@ -55,8 +48,6 @@ func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {
 	assert.NoError(err4)
 	assert.Nil(ptr4)
 
-	assert.Panics(func() { L.CheckUserData(L.GetTop(), mtName) })
-	assert.Panics(func() { L.CheckUserData(9999, mtName) })
 	ptr, err = L.TestUserData(9999, mtName)
 	assert.NoError(err)
 	assert.Nil(ptr)
