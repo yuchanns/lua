@@ -235,6 +235,11 @@ func (s *Suite) TestCheckLString(assert *require.Assertions, L *lua.State) {
 	assert.Equal(testStr, result)
 	L.Pop(1)
 
+	L.PushString(testStr)
+	result = L.CheckString(-1)
+	assert.Equal(testStr, result)
+	L.Pop(1)
+
 	L.PushString("")
 	result = L.CheckLString(-1, 0)
 	assert.Equal("", result)
