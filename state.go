@@ -335,3 +335,30 @@ var NoOpKFunction LuaKFunction = func(_ unsafe.Pointer, _ int, _ unsafe.Pointer)
 var NoOpKFunc KFunc = func(_ *State, _ int, _ unsafe.Pointer) int {
 	return 0
 }
+
+// Requiref loads a Lua module by name, calling the provided Go function to open it.
+func (s *State) Requiref(modname string, openf GoFunc, global bool) (err error) {
+	mname, err := tools.BytePtrFromString(modname)
+	if err != nil {
+		return
+	}
+	var glb int
+	if global {
+		glb = 1
+	}
+	s.ffi.LuaLRequiref(s.luaL, mname, func(L unsafe.Pointer) int {
+		state := s.clone(L)
+		return openf(state)
+	}, glb)
+	return
+}
+
+// Ref creates a reference to the value at the given stack index, returning a unique reference ID.
+func (s *State) Ref(idx int) int {
+	return s.ffi.LuaLRef(s.luaL, idx)
+}
+
+// Unref removes a reference created by Ref, the entry is removed from the table.
+func (s *State) Unref(idx int, ref int) {
+	s.ffi.LuaLUnref(s.luaL, idx, ref)
+}
