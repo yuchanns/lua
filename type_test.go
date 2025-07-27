@@ -230,9 +230,10 @@ func (s *Suite) TestCheckLString(assert *require.Assertions, L *lua.State) {
 
 	testStr := "Hello, World!"
 	L.PushString(testStr)
-	size := len(testStr)
-	result := L.CheckLString(-1, size)
+	var size int
+	result := L.CheckLString(-1, &size)
 	assert.Equal(testStr, result)
+	assert.Equal(len(testStr), size)
 	L.Pop(1)
 
 	L.PushString(testStr)
@@ -241,25 +242,29 @@ func (s *Suite) TestCheckLString(assert *require.Assertions, L *lua.State) {
 	L.Pop(1)
 
 	L.PushString("")
-	result = L.CheckLString(-1, 0)
+	result = L.CheckLString(-1, &size)
 	assert.Equal("", result)
+	assert.Equal(0, size)
 	L.Pop(1)
 
 	unicodeStr := "你好世界🌍"
 	L.PushString(unicodeStr)
 	size = len(unicodeStr)
-	result = L.CheckLString(-1, size)
+	result = L.CheckLString(-1, &size)
 	assert.Equal(unicodeStr, result)
+	assert.Equal(len(unicodeStr), size)
 	L.Pop(1)
 
 	L.PushNumber(42.5)
-	result = L.CheckLString(-1, 10)
+	result = L.CheckLString(-1, &size)
 	assert.Equal("42.5", result)
+	assert.Equal(len("42.5"), size)
 	L.Pop(1)
 
 	L.PushInteger(123)
-	result = L.CheckLString(-1, 10)
+	result = L.CheckLString(-1, &size)
 	assert.Equal("123", result)
+	assert.Equal(len("123"), size)
 	L.Pop(1)
 }
 
