@@ -1,6 +1,10 @@
 # lua
 Lua Go binding in purego
 
+## Caution
+
+⚠️This library is **working in progress** 🚧 And APIs are not stable yet, maybe cause breaking changes many times. I make it public only for unlimited GitHub Actions minutes. It is not recommended to use at this moment.
+
 ## Installation
 
 ```bash
