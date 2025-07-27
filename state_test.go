@@ -497,3 +497,30 @@ func (s *Suite) TestPCallGoFunction(assert *require.Assertions, L *lua.State) {
 
 	assert.NoError(L.DoString(`do_string("pcall(test_func())")`))
 }
+
+func (s *Suite) TestRequiref(assert *require.Assertions, L *lua.State) {
+	err := L.Requiref("testmodule", func(L *lua.State) int {
+		L.PushString("Hello from testmodule")
+		return 1
+	}, false)
+	assert.NoError(err)
+
+	err = L.DoString(`local m = require("testmodule"); return m`)
+	assert.NoError(err)
+
+	assert.True(L.IsString(-1))
+	assert.Equal("Hello from testmodule", L.ToString(-1))
+	L.Pop(1)
+}
+
+func (s *Suite) TestRef(assert *require.Assertions, L *lua.State) {
+	L.PushString("test_ref")
+	ref := L.Ref(lua.LUA_REGISTRYINDEX)
+
+	L.RawGetI(lua.LUA_REGISTRYINDEX, int64(ref))
+	assert.True(L.IsString(-1))
+	assert.Equal("test_ref", L.ToString(-1))
+	L.Pop(1)
+
+	L.Unref(lua.LUA_REGISTRYINDEX, ref)
+}

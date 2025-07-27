@@ -164,6 +164,10 @@ type ffi struct {
 	LuaLLoadstring  func(L unsafe.Pointer, s *byte) int                                    `ffi:"luaL_loadstring,gte=503"`
 	LuaLLoadfilex   func(L unsafe.Pointer, filename *byte, mode *byte) int                 `ffi:"luaL_loadfilex,gte=503"`
 	LuaLLoadbufferx func(L unsafe.Pointer, buff *byte, sz int, name *byte, mode *byte) int `ffi:"luaL_loadbufferx,gte=503"`
+
+	LuaLRef      func(L unsafe.Pointer, idx int) int                                `ffi:"luaL_ref,gte=503"`
+	LuaLUnref    func(L unsafe.Pointer, idx int, ref int)                           `ffi:"luaL_unref,gte=503"`
+	LuaLRequiref func(L unsafe.Pointer, modname *byte, openf LuaCFunction, glb int) `ffi:"luaL_requiref,gte=503"`
 }
 
 // getLuaVersion retrieves the Lua version from the loaded library.
