@@ -151,10 +151,7 @@ func (s *State) PushString(sv string) (ret *byte, err error) {
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushcclosure
 func (s *State) PushGoClousure(f GoFunc, n int) {
 	s.ffi.LuaPushcclousure(s.luaL, func(L unsafe.Pointer) int {
-		state := &State{
-			ffi:  s.ffi,
-			luaL: L,
-		}
+		state := s.clone(L)
 		return f(state)
 	}, n)
 }

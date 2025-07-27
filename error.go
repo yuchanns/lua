@@ -24,3 +24,13 @@ func (e *Error) Status() int {
 func (e *Error) Message() string {
 	return e.message
 }
+
+// UnprotectedError represents an error that occurs when an operation is attempted on a Lua state
+// that called without pcallk or pcall.
+type UnprotectedError struct {
+	message string
+}
+
+func (e *UnprotectedError) Error() string {
+	return fmt.Sprintf("Unprotected Error in call to Lua API (%s)", e.message)
+}

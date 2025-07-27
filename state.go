@@ -11,6 +11,8 @@ import (
 type stateOpt struct {
 	alloc    LuaAlloc
 	userData unsafe.Pointer
+
+	withoutUwindingProtection bool
 }
 
 // State represents a single Lua interpreter state, holding runtime and memory context.
@@ -24,24 +26,38 @@ type State struct {
 	// SAFETY: refAlloc holds a reference to the allocator's user data
 	// to prevent garbage collection while the Lua state is active.
 	refAlloc unsafe.Pointer
+
+	unwindingProtection bool
 }
 
-func newState(ffi *ffi, o *stateOpt) (state *State) {
-	var L unsafe.Pointer
+func newState(ffi *ffi, o *stateOpt) (L *State) {
+	var luaL unsafe.Pointer
 	var refAlloc unsafe.Pointer
-	if o != nil {
+	if o.userData != nil && o.alloc != nil {
 		refAlloc = o.userData
-		L = ffi.LuaNewstate(o.alloc, o.userData)
+		luaL = ffi.LuaNewstate(o.alloc, o.userData)
 	} else {
-		L = ffi.LuaLNewstate()
+		luaL = ffi.LuaLNewstate()
 	}
 
-	return &State{
+	L = &State{
 		ffi:  ffi,
-		luaL: L,
+		luaL: luaL,
 
-		refAlloc: refAlloc,
+		refAlloc:            refAlloc,
+		unwindingProtection: !o.withoutUwindingProtection,
 	}
+
+	if L.unwindingProtection {
+		// Convert Lua errors into Go panics
+		L.AtPanic(func(L *State) int {
+			err := L.checkUnprotectedError()
+
+			panic(err)
+		})
+	}
+
+	return L
 }
 
 // OpenLibs loads all standard Lua libraries into the current state.
@@ -69,10 +85,7 @@ type GoFunc func(L *State) int
 // See: https://www.lua.org/manual/5.4/manual.html#lua_atpanic
 func (s *State) AtPanic(fn GoFunc) (old GoFunc) {
 	panicf := func(L unsafe.Pointer) int {
-		state := &State{
-			ffi:  s.ffi,
-			luaL: L,
-		}
+		state := s.clone(L)
 		return fn(state)
 	}
 	oldptr := s.ffi.LuaAtpanic(s.luaL, panicf)
@@ -101,6 +114,21 @@ func (s *State) CheckError(status int) error {
 		status:  status,
 		message: msg,
 	}
+}
+
+func (s *State) clone(L unsafe.Pointer) *State {
+	return &State{
+		ffi:                 s.ffi,
+		luaL:                L,
+		refAlloc:            s.refAlloc,
+		unwindingProtection: s.unwindingProtection,
+	}
+}
+
+func (s *State) checkUnprotectedError() error {
+	msg := s.ToString(-1)
+	s.Pop(1)
+	return &UnprotectedError{message: msg}
 }
 
 // Errorf raises a formatted Lua error from the Go side, pushing the error onto the Lua stack.
@@ -263,7 +291,18 @@ func (s *State) PCall(nargs, nresults, errfunc int) (err error) {
 // PCallK is like PCall but with full support for Lua continuation functions and execution contexts. Used for advanced coroutine yield/resume situations.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pcallk
 func (s *State) PCallK(nargs, nresults, errfunc int, ctx unsafe.Pointer, k LuaKFunction) (err error) {
-	err = s.CheckError(s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, k))
+	if !s.unwindingProtection {
+		return s.CheckError(s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, k))
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = &Error{
+				status:  LUA_ERRRUN,
+				message: fmt.Sprintf("%v", r),
+			}
+		}
+	}()
+	s.CallK(nargs, nresults, ctx, k)
 	return
 }
 
@@ -284,10 +323,7 @@ type WarnFunc func(L *State, msg string, tocont int)
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setwarnf
 func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 	s.ffi.LuaSetwarnf(s.luaL, func(ud unsafe.Pointer, msg *byte, tocont int) {
-		state := &State{
-			ffi:  s.ffi,
-			luaL: ud,
-		}
+		state := s.clone(ud)
 		fn(state, tools.BytePtrToString(msg), tocont)
 	}, ud)
 }

@@ -364,8 +364,6 @@ func (s *Suite) TestPCall(assert *require.Assertions, L *lua.State) {
 
 	err = L.PCall(0, 1, errHandlerIdx)
 	assert.Error(err)
-
-	L.Pop(1)
 }
 
 func (s *Suite) TestCall(assert *require.Assertions, L *lua.State) {
@@ -446,11 +444,6 @@ func (s *Suite) TestCall(assert *require.Assertions, L *lua.State) {
 	assert.Equal(0.0, L.ToNumber(-1))
 	L.Pop(2)
 
-	old := L.AtPanic(func(L *lua.State) int {
-		msg := L.ToString(-1)
-		panic(msg)
-	})
-
 	assert.Panics(func() {
 		err := L.LoadString("error('test runtime error')")
 		assert.NoError(err)
@@ -469,8 +462,6 @@ func (s *Suite) TestCall(assert *require.Assertions, L *lua.State) {
 		L.Call(0, 0)
 	})
 
-	L.AtPanic(old)
-
 	err = L.LoadString("return 'normal execution'")
 	assert.NoError(err)
 	L.Call(0, 1)
@@ -487,4 +478,22 @@ func (s *Suite) TestGlobal(assert *require.Assertions, L *lua.State) {
 	assert.NoError(L.GetGlobal(key))
 	assert.True(L.IsString(-1))
 	assert.Equal(val, L.ToString(-1))
+}
+
+func (s *Suite) TestPCallGoFunction(assert *require.Assertions, L *lua.State) {
+	L.PushGoFunction(func(L *lua.State) int {
+		L.Errorf("This is a test error")
+		return 0
+	})
+	L.SetGlobal("test_func")
+
+	assert.Error(L.DoString(`pcall(test_func())`))
+
+	L.PushGoFunction(func(L *lua.State) int {
+		assert.Error(L.DoString(L.ToString(1)))
+		return 0
+	})
+	L.SetGlobal("do_string")
+
+	assert.NoError(L.DoString(`do_string("pcall(test_func())")`))
 }
