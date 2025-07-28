@@ -76,6 +76,7 @@ type ffi struct {
 	LuaTocfunction func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_tocfunction,gte=503"`
 	LuaTouserdata  func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_touserdata,gte=503"`
 	LuaTothread    func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_tothread,gte=503"`
+	LuaTopointer   func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_topointer,gte=503"`
 
 	LuaRawequal func(L unsafe.Pointer, idx1 int, idx2 int) int         `ffi:"lua_rawequal,gte=503"`
 	LuaCompare  func(L unsafe.Pointer, idx1 int, idx2 int, op int) int `ffi:"lua_compare,gte=503"`

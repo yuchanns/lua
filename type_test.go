@@ -54,6 +54,35 @@ func (s *Suite) TestTypeLightUserData(assert *require.Assertions, L *lua.State) 
 	assert.Nil(nilPtrRetrieved)
 }
 
+func (s *Suite) TestTypeToPointer(assert *require.Assertions, L *lua.State) {
+	var testVar = &testObject{id: 456}
+	testVar.data[0] = 84
+	err := L.PushLightUserData(testVar)
+	assert.NoError(err)
+
+	assert.True(L.IsLightUserData(-1))
+	assert.Equal(lua.LUA_TLIGHTUSERDATA, L.Type(-1))
+	assert.Equal("userdata", L.TypeName(L.Type(-1)))
+
+	ptr := L.ToPointer(-1)
+	assert.NotNil(ptr)
+
+	retrievedPtr := (*testObject)(ptr)
+	assert.Equal(byte(84), retrievedPtr.data[0])
+	assert.Equal(456, retrievedPtr.id)
+
+	L.Pop(1)
+
+	// Test with nil pointer
+	var nilPtr *int
+	err = L.PushLightUserData(nilPtr)
+	assert.NoError(err)
+	nilPtrRetrieved := L.ToPointer(-1)
+	assert.Nil(nilPtrRetrieved)
+
+	L.Pop(1)
+}
+
 func (s *Suite) TestTypeToCFunction(assert *require.Assertions, L *lua.State) {
 
 	testCFunc := func(L *lua.State) int {

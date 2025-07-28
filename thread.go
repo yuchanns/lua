@@ -114,3 +114,8 @@ func (s *State) ToThread(idx int) *State {
 	L := s.ffi.LuaTothread(s.luaL, idx)
 	return s.clone(L)
 }
+
+// ToPointer returns the Lua value at the given stack index as an unsafe.Pointer.
+func (s *State) ToPointer(idx int) unsafe.Pointer {
+	return s.ffi.LuaTopointer(s.luaL, idx)
+}
