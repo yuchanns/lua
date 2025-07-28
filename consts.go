@@ -66,3 +66,5 @@ const (
 	LUA_OPLT = 1 // less than
 	LUA_OPLE = 2 // less or equal
 )
+
+const LUA_MINSTACK = 20

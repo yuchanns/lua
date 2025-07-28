@@ -156,6 +156,29 @@ func (s *State) PushGoClousure(f GoFunc, n int) {
 	}, n)
 }
 
+// GetUpValue retrieves the name of the n-th upvalue of a function at funcindex.
+func (s *State) SetUpValue(funcindex int, n int) (name string) {
+	namePtr := s.ffi.LuaSetupvalue(s.luaL, funcindex, n)
+	if namePtr != nil {
+		name = tools.BytePtrToString(namePtr)
+	}
+	return
+}
+
+// GetUpValue retrieves the name of the n-th upvalue of a function at funcindex.
+func (s *State) GetUpValue(funcindex int, n int) (name string) {
+	namePtr := s.ffi.LuaGetupvalue(s.luaL, funcindex, n)
+	if namePtr != nil {
+		name = tools.BytePtrToString(namePtr)
+	}
+	return
+}
+
+// UpValueIndex returns the index of the n-th upvalue of a function.
+func (s *State) UpValueIndex(n int) int {
+	return LUA_REGISTRYINDEX - n
+}
+
 // PushBoolean pushes a Go boolean onto the stack as a Lua boolean value.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushboolean
 func (s *State) PushBoolean(b bool) int {
