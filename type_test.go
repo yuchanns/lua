@@ -83,10 +83,10 @@ func (s *Suite) TestTypeToPointer(assert *require.Assertions, L *lua.State) {
 	L.Pop(1)
 }
 
-func (s *Suite) TestTypeToCFunction(assert *require.Assertions, L *lua.State) {
-
+func (s *Suite) TestTypeToGoFunction(assert *require.Assertions, L *lua.State) {
+	expected := "Hello from Go function"
 	testCFunc := func(L *lua.State) int {
-		L.PushString("Hello from C function")
+		L.PushString(expected)
 		return 1
 	}
 
@@ -96,8 +96,11 @@ func (s *Suite) TestTypeToCFunction(assert *require.Assertions, L *lua.State) {
 	assert.Equal(lua.LUA_TFUNCTION, L.Type(-1))
 	assert.Equal("function", L.TypeName(L.Type(-1)))
 
-	cfuncPtr := L.ToCFunction(-1)
-	assert.NotNil(cfuncPtr)
+	goFunc := L.ToGoFunction(-1)
+	assert.NotNil(goFunc)
+
+	assert.NoError(L.PCall(0, 1, 0))
+	assert.Equal(expected, L.ToString(-1))
 
 	L.Pop(1)
 	err := L.LoadString("function test() return 42 end")
@@ -106,20 +109,20 @@ func (s *Suite) TestTypeToCFunction(assert *require.Assertions, L *lua.State) {
 	assert.True(L.IsFunction(-1))
 	assert.False(L.IsGoFunction(-1))
 
-	luaFuncPtr := L.ToCFunction(-1)
-	assert.Nil(luaFuncPtr)
+	luaFunc := L.ToGoFunction(-1)
+	assert.Nil(luaFunc)
 
 	L.Pop(1)
 	L.PushInteger(42)
 	assert.False(L.IsGoFunction(-1))
-	nonFuncPtr := L.ToCFunction(-1)
-	assert.Nil(nonFuncPtr)
+	nonFunc := L.ToGoFunction(-1)
+	assert.Nil(nonFunc)
 
 	L.Pop(1)
 	L.PushNil()
 	assert.False(L.IsGoFunction(-1))
-	nilPtr := L.ToCFunction(-1)
-	assert.Nil(nilPtr)
+	nilFunc := L.ToGoFunction(-1)
+	assert.Nil(nilFunc)
 }
 
 func (s *Suite) TestTypeToRawLen(assert *require.Assertions, L *lua.State) {
@@ -187,6 +190,47 @@ func (s *Suite) TestFunction(assert *require.Assertions, L *lua.State) {
 	assert.NoError(L.SetGlobal("double_number"))
 
 	assert.NoError(L.DoString(`print_number(double_number(21))`))
+}
+
+func (s *Suite) TestFunctionUpValue(assert *require.Assertions, L *lua.State) {
+	L.PushString("World")
+	L.PushGoClousure(func(L *lua.State) int {
+		upValue := L.ToString(L.UpValueIndex(1))
+		L.PushString("Hello, " + upValue)
+		return 1
+	}, 1)
+	L.PushValue(-1)
+	assert.NoError(L.PCall(0, 1, 0))
+	assert.Equal("Hello, World", L.ToString(-1))
+	L.Pop(1)
+
+	L.PushString("Go")
+	L.SetUpValue(-2, 1)
+	assert.Empty(L.GetUpValue(-1, 1))
+	assert.Equal("Go", L.ToString(-1))
+	L.Pop(1)
+
+	assert.NoError(L.PCall(0, 1, 0))
+	assert.Equal("Hello, Go", L.ToString(-1))
+
+	err := L.DoString(`
+function make_counter()
+  local count = 0
+	return function()
+	  count = count + 1
+		return count
+	end
+end
+counter = make_counter()
+	`)
+	assert.NoError(err)
+	L.GetGlobal("counter")
+	assert.Equal("count", L.GetUpValue(-1, 1))
+	L.Pop(1)
+	L.PushInteger(2)
+	assert.Equal("count", L.SetUpValue(-2, 1))
+	assert.NoError(L.PCall(0, 1, 0))
+	assert.EqualValues(3, L.ToInteger(-1))
 }
 
 func (s *Suite) TestCheckNumber(assert *require.Assertions, L *lua.State) {

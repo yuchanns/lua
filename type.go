@@ -146,10 +146,17 @@ func (s *State) ToUserData(idx int) unsafe.Pointer {
 	return s.ffi.LuaTouserdata(s.luaL, idx)
 }
 
-// ToCFunction returns the Go representation of the Lua C function at idx, or nil if not a function.
+// ToGoFunction returns the Go representation of the Lua C function at idx, or nil if not a function.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_tocfunction
-func (s *State) ToCFunction(idx int) unsafe.Pointer {
-	return s.ffi.LuaTocfunction(s.luaL, idx)
+func (s *State) ToGoFunction(idx int) GoFunc {
+	fnptr := s.ffi.LuaTocfunction(s.luaL, idx)
+	if fnptr == nil {
+		return nil
+	}
+	return func(L *State) int {
+		cFunc := *(*LuaCFunction)(fnptr)
+		return cFunc(L.luaL)
+	}
 }
 
 // RawLen returns the length of value at idx (arrays, strings, tables).

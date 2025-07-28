@@ -115,6 +115,9 @@ type ffi struct {
 	LuaGetmetatable func(L unsafe.Pointer, objindex int) int `ffi:"lua_getmetatable,gte=503"`
 	LuaSetmetatable func(L unsafe.Pointer, objindex int) int `ffi:"lua_setmetatable,gte=503"`
 
+	LuaSetupvalue func(L unsafe.Pointer, idx int, n int) *byte `ffi:"lua_setupvalue,gte=503"`
+	LuaGetupvalue func(L unsafe.Pointer, idx int, n int) *byte `ffi:"lua_getupvalue,gte=503"`
+
 	// Userdata functions
 	LuaNewuserdata   func(L unsafe.Pointer, sz int) unsafe.Pointer              `ffi:"lua_newuserdata,gte=503,lte=503"`
 	LuaGetuservalue  func(L unsafe.Pointer, idx int) int32                      `ffi:"lua_getuservalue,gte=503,lte=503"`
