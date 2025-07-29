@@ -96,32 +96,37 @@ func (s *Suite) TestTypeToGoFunction(assert *require.Assertions, L *lua.State) {
 	assert.Equal(lua.LUA_TFUNCTION, L.Type(-1))
 	assert.Equal("function", L.TypeName(L.Type(-1)))
 
-	goFunc := L.ToGoFunction(-1)
-	assert.NotNil(goFunc)
+	cFunc := L.ToCFunction(-1)
+	assert.NotNil(cFunc)
 
 	assert.NoError(L.PCall(0, 1, 0))
 	assert.Equal(expected, L.ToString(-1))
-
 	L.Pop(1)
+
+	L.PushCFunction(cFunc)
+	assert.NoError(L.PCall(0, 1, 0))
+	assert.Equal(expected, L.ToString(-1))
+	L.Pop(1)
+
 	err := L.LoadString("function test() return 42 end")
 	assert.NoError(err)
 
 	assert.True(L.IsFunction(-1))
 	assert.False(L.IsGoFunction(-1))
 
-	luaFunc := L.ToGoFunction(-1)
+	luaFunc := L.ToCFunction(-1)
 	assert.Nil(luaFunc)
 
 	L.Pop(1)
 	L.PushInteger(42)
 	assert.False(L.IsGoFunction(-1))
-	nonFunc := L.ToGoFunction(-1)
+	nonFunc := L.ToCFunction(-1)
 	assert.Nil(nonFunc)
 
 	L.Pop(1)
 	L.PushNil()
 	assert.False(L.IsGoFunction(-1))
-	nilFunc := L.ToGoFunction(-1)
+	nilFunc := L.ToCFunction(-1)
 	assert.Nil(nilFunc)
 }
 
