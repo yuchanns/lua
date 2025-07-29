@@ -18,9 +18,9 @@ type LuaReader func(L unsafe.Pointer, ud unsafe.Pointer, sz *int) *byte
 // See: https://www.lua.org/manual/5.4/manual.html#lua_Alloc
 type LuaAlloc func(ud unsafe.Pointer, ptr unsafe.Pointer, osize, nsize int) unsafe.Pointer
 
-// LuaCFunction is the Go equivalent of the C lua_CFunction for stack-based callbacks.
+// LuaGoFunction is the Go equivalent of the C lua_CFunction for stack-based callbacks.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_CFunction
-type LuaCFunction func(L unsafe.Pointer) int
+type LuaGoFunction func(L unsafe.Pointer) int
 
 // LuaKFunction is the Go equivalent for lua_KFunction, supporting continuation-style yields from C to Lua.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_KFunction
@@ -45,7 +45,7 @@ type ffi struct {
 	LuaClosethread func(L unsafe.Pointer, from unsafe.Pointer) int    `ffi:"lua_closethread,gte=504"`
 	LuaResetthread func(L unsafe.Pointer) int                         `ffi:"lua_resetthread,gte=504"`
 
-	LuaAtpanic func(L unsafe.Pointer, panicf LuaCFunction) unsafe.Pointer `ffi:"lua_atpanic,gte=503"`
+	LuaAtpanic func(L unsafe.Pointer, panicf LuaGoFunction) unsafe.Pointer `ffi:"lua_atpanic,gte=503"`
 
 	LuaVersion func(L unsafe.Pointer) float64 `ffi:"lua_version,gte=503"`
 
@@ -85,15 +85,16 @@ type ffi struct {
 	LuaLen      func(L unsafe.Pointer, idx int)                        `ffi:"lua_len,gte=503"`
 
 	// Push functions
-	LuaPushnil           func(L unsafe.Pointer)                         `ffi:"lua_pushnil,gte=503"`
-	LuaPushnumber        func(L unsafe.Pointer, n float64)              `ffi:"lua_pushnumber,gte=503"`
-	LuaPushinteger       func(L unsafe.Pointer, n int64)                `ffi:"lua_pushinteger,gte=503"`
-	LuaPushlstring       func(L unsafe.Pointer, s *byte, len int) *byte `ffi:"lua_pushlstring,gte=503"`
-	LuaPushstring        func(L unsafe.Pointer, s *byte) *byte          `ffi:"lua_pushstring,gte=503"`
-	LuaPushcclousure     func(L unsafe.Pointer, f LuaCFunction, n int)  `ffi:"lua_pushcclosure,gte=503"`
-	LuaPushboolean       func(L unsafe.Pointer, b int) int              `ffi:"lua_pushboolean,gte=503"`
-	LuaPushlightuserdata func(L unsafe.Pointer, p unsafe.Pointer)       `ffi:"lua_pushlightuserdata,gte=503"`
-	LuaPushthread        func(L unsafe.Pointer) int                     `ffi:"lua_pushthread,gte=503"`
+	LuaPushnil           func(L unsafe.Pointer)                          `ffi:"lua_pushnil,gte=503"`
+	LuaPushnumber        func(L unsafe.Pointer, n float64)               `ffi:"lua_pushnumber,gte=503"`
+	LuaPushinteger       func(L unsafe.Pointer, n int64)                 `ffi:"lua_pushinteger,gte=503"`
+	LuaPushlstring       func(L unsafe.Pointer, s *byte, len int) *byte  `ffi:"lua_pushlstring,gte=503"`
+	LuaPushstring        func(L unsafe.Pointer, s *byte) *byte           `ffi:"lua_pushstring,gte=503"`
+	LuaPushgoclosure     func(L unsafe.Pointer, f LuaGoFunction, n int)  `ffi:"lua_pushcclosure,gte=503"`
+	LuaPushcclousure     func(L unsafe.Pointer, f unsafe.Pointer, n int) `ffi:"lua_pushcclosure,gte=503"`
+	LuaPushboolean       func(L unsafe.Pointer, b int) int               `ffi:"lua_pushboolean,gte=503"`
+	LuaPushlightuserdata func(L unsafe.Pointer, p unsafe.Pointer)        `ffi:"lua_pushlightuserdata,gte=503"`
+	LuaPushthread        func(L unsafe.Pointer) int                      `ffi:"lua_pushthread,gte=503"`
 
 	// Table and field functions
 	LuaCreatetable func(L unsafe.Pointer, narr, nrec int)         `ffi:"lua_createtable,gte=503"`
@@ -169,9 +170,9 @@ type ffi struct {
 	LuaLLoadfilex   func(L unsafe.Pointer, filename *byte, mode *byte) int                 `ffi:"luaL_loadfilex,gte=503"`
 	LuaLLoadbufferx func(L unsafe.Pointer, buff *byte, sz int, name *byte, mode *byte) int `ffi:"luaL_loadbufferx,gte=503"`
 
-	LuaLRef      func(L unsafe.Pointer, idx int) int                                `ffi:"luaL_ref,gte=503"`
-	LuaLUnref    func(L unsafe.Pointer, idx int, ref int)                           `ffi:"luaL_unref,gte=503"`
-	LuaLRequiref func(L unsafe.Pointer, modname *byte, openf LuaCFunction, glb int) `ffi:"luaL_requiref,gte=503"`
+	LuaLRef      func(L unsafe.Pointer, idx int) int                                 `ffi:"luaL_ref,gte=503"`
+	LuaLUnref    func(L unsafe.Pointer, idx int, ref int)                            `ffi:"luaL_unref,gte=503"`
+	LuaLRequiref func(L unsafe.Pointer, modname *byte, openf LuaGoFunction, glb int) `ffi:"luaL_requiref,gte=503"`
 }
 
 // getLuaVersion retrieves the Lua version from the loaded library.

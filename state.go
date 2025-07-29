@@ -81,19 +81,14 @@ func (s *State) Close() {
 
 type GoFunc func(L *State) int
 
-// AtPanic sets a Go function as the Lua panic handler for this state, returning the old panic handler.
+// AtPanic sets a Go function as the Lua panic handler for this state, returning pointer of the old panic handler.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_atpanic
-func (s *State) AtPanic(fn GoFunc) (old GoFunc) {
+func (s *State) AtPanic(fn GoFunc) (old unsafe.Pointer) {
 	panicf := func(L unsafe.Pointer) int {
 		state := s.clone(L)
 		return fn(state)
 	}
-	oldptr := s.ffi.LuaAtpanic(s.luaL, panicf)
-	oldCfunc := *(*LuaCFunction)(unsafe.Pointer(&oldptr))
-	return func(state *State) int {
-		L := unsafe.Pointer(state)
-		return oldCfunc(L)
-	}
+	return s.ffi.LuaAtpanic(s.luaL, panicf)
 }
 
 // Version returns the current version of the Lua runtime loaded in this state.

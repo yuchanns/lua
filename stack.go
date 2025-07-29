@@ -150,7 +150,7 @@ func (s *State) PushString(sv string) (ret *byte, err error) {
 // Caution: upvalues are read from the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushcclosure
 func (s *State) PushGoClousure(f GoFunc, n int) {
-	s.ffi.LuaPushcclousure(s.luaL, func(L unsafe.Pointer) int {
+	s.ffi.LuaPushgoclosure(s.luaL, func(L unsafe.Pointer) int {
 		state := s.clone(L)
 		return f(state)
 	}, n)
@@ -205,4 +205,16 @@ func (s *State) PushLightUserData(ud any) (err error) {
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushcfunction
 func (s *State) PushGoFunction(f GoFunc) {
 	s.PushGoClousure(f, 0)
+}
+
+// PushCFunction pushes a C function pointer as a Lua C closure with no upvalues.
+// Typically used with C function pointers from ToCFunction
+func (s *State) PushCFunction(f unsafe.Pointer) {
+	s.PushCClousure(f, 0)
+}
+
+// PushCClousure pushes a C function pointer as a Lua C closure with n upvalues.
+// Typically used with C function pointers from ToCFunction
+func (s *State) PushCClousure(f unsafe.Pointer, n int) {
+	s.ffi.LuaPushcclousure(s.luaL, f, n)
 }
