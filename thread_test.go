@@ -39,8 +39,9 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 	assert.Equal(lua.LUA_OK, co.Status())
 	L.Pop(1)
 
-	retc, err := co.Resume(L, 0)
+	retc, yield, err := co.Resume(L, 0)
 	assert.NoError(err)
+	assert.True(yield)
 	if L.Version() >= 504 {
 		assert.EqualValues(1, retc)
 		assert.EqualValues(1, co.ToNumber(-1))
@@ -51,8 +52,9 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 		co.Pop(1)
 	}
 
-	retc, err = co.Resume(L, 0)
+	retc, yield, err = co.Resume(L, 0)
 	assert.NoError(err)
+	assert.True(yield)
 	if L.Version() >= 504 {
 		assert.EqualValues(1, retc)
 		assert.EqualValues(2, co.ToNumber(-1))
@@ -63,8 +65,9 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 		co.Pop(1)
 	}
 
-	retc, err = co.Resume(L, 0)
+	retc, yield, err = co.Resume(L, 0)
 	assert.NoError(err)
+	assert.False(yield)
 	if L.Version() >= 504 {
 		assert.EqualValues(1, retc)
 		assert.EqualValues(99, co.ToNumber(-1))
@@ -74,7 +77,7 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 	}
 	co.Pop(1)
 
-	_, err = co.Resume(L, 0)
+	_, _, err = co.Resume(L, 0)
 	assert.Error(err)
 
 	if L.Version() >= 504 {
@@ -88,8 +91,9 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 	co.PushInteger(3)
 	assert.Equal(lua.LUA_OK, co.Status())
 
-	nres, err := co.Resume(L, 1)
+	nres, yield, err := co.Resume(L, 1)
 	assert.NoError(err)
+	assert.True(yield)
 	if L.Version() >= 504 {
 		assert.EqualValues(2, nres)
 		assert.EqualValues(3, co.ToNumber(-2))
@@ -102,8 +106,9 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 		co.Pop(2)
 	}
 
-	nres, err = co.Resume(L, 0)
+	nres, yield, err = co.Resume(L, 0)
 	assert.NoError(err)
+	assert.False(yield)
 	if L.Version() >= 504 {
 		assert.EqualValues(1, nres)
 		assert.EqualValues(6, co.ToNumber(-1))
@@ -114,7 +119,7 @@ func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
 		co.Pop(1)
 	}
 
-	_, err = co.Resume(L, 0)
+	_, _, err = co.Resume(L, 0)
 	assert.Error(err)
 }
 

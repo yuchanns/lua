@@ -134,6 +134,12 @@ func (s *State) Errorf(format string, args ...any) int {
 	return s.ffi.LuaLError(s.luaL, b)
 }
 
+// Traceback pushes a traceback message onto the stack, useful for debugging.
+func (s *State) Traceback(L1 *State, message string, level int) {
+	b, _ := tools.BytePtrFromString(message)
+	s.ffi.LuaLTraceback(s.luaL, L1.luaL, b, level)
+}
+
 // SetGlobal sets a global variable in the Lua environment using the value at the top of the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setglobal
 func (s *State) SetGlobal(name string) (err error) {

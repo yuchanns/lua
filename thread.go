@@ -76,10 +76,11 @@ func (s *State) Yield(nresults int) (err error) {
 	return s.YieldK(nresults, nil, NoOpKFunc)
 }
 
-// Resume resumes the given Lua thread, passing narg arguments, and returns possible error.
+// Resume resumes the given Lua thread, passing narg arguments, and returns possible error and
+// whether it yielded.
 // Available since lua5.4: return the number of results
 // See: https://www.lua.org/manual/5.4/manual.html#lua_resume
-func (s *State) Resume(from *State, narg int) (nres int32, err error) {
+func (s *State) Resume(from *State, narg int) (nres int32, yield bool, err error) {
 	var fromL unsafe.Pointer
 	if from != nil {
 		fromL = from.luaL
@@ -90,6 +91,7 @@ func (s *State) Resume(from *State, narg int) (nres int32, err error) {
 	} else {
 		status = s.ffi.LuaResume503(s.luaL, fromL, narg)
 	}
+	yield = status == LUA_YIELD
 	if status != LUA_OK && status != LUA_YIELD {
 		err = s.CheckError(status)
 	}

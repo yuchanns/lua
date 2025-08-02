@@ -480,6 +480,16 @@ func (s *Suite) TestGlobal(assert *require.Assertions, L *lua.State) {
 	assert.Equal(val, L.ToString(-1))
 }
 
+func (s *Suite) TestTraceback(assert *require.Assertions, L *lua.State) {
+	L.PushGoFunction(func(L *lua.State) int {
+		L.PushString("This is a test error")
+		L.Traceback(L, "test_traceback", 0)
+		return 2
+	})
+	L.SetGlobal("test_traceback_func")
+	assert.NoError(L.DoString(`print(test_traceback_func())`))
+}
+
 func (s *Suite) TestPCallGoFunction(assert *require.Assertions, L *lua.State) {
 	L.PushGoFunction(func(L *lua.State) int {
 		L.Errorf("This is a test error")
