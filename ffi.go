@@ -170,6 +170,8 @@ type ffi struct {
 	LuaLLoadfilex   func(L unsafe.Pointer, filename *byte, mode *byte) int                 `ffi:"luaL_loadfilex,gte=503"`
 	LuaLLoadbufferx func(L unsafe.Pointer, buff *byte, sz int, name *byte, mode *byte) int `ffi:"luaL_loadbufferx,gte=503"`
 
+	LuaLTraceback func(L unsafe.Pointer, L1 unsafe.Pointer, msg *byte, level int) int `ffi:"luaL_traceback,gte=503"`
+
 	LuaLRef      func(L unsafe.Pointer, idx int) int                                 `ffi:"luaL_ref,gte=503"`
 	LuaLUnref    func(L unsafe.Pointer, idx int, ref int)                            `ffi:"luaL_unref,gte=503"`
 	LuaLRequiref func(L unsafe.Pointer, modname *byte, openf LuaGoFunction, glb int) `ffi:"luaL_requiref,gte=503"`
