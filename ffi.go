@@ -30,6 +30,11 @@ type LuaKFunction func(L unsafe.Pointer, status int, ctx unsafe.Pointer) int
 // See: https://www.lua.org/manual/5.4/manual.html#lua_WarnFunction
 type LuaWarnFunction func(ud unsafe.Pointer, msg *byte, tocont int)
 
+type LuaLReg struct {
+	Name *byte
+	Func unsafe.Pointer
+}
+
 // ffi stores all dynamically loaded Lua C API entry points for runtime use.
 // This struct provides Go bindings to the Lua C API using purego FFI.
 // We use `ffi` tag to specify the function name and version requirements for each entry point.
@@ -169,6 +174,8 @@ type ffi struct {
 	LuaLLoadstring  func(L unsafe.Pointer, s *byte) int                                    `ffi:"luaL_loadstring,gte=503"`
 	LuaLLoadfilex   func(L unsafe.Pointer, filename *byte, mode *byte) int                 `ffi:"luaL_loadfilex,gte=503"`
 	LuaLLoadbufferx func(L unsafe.Pointer, buff *byte, sz int, name *byte, mode *byte) int `ffi:"luaL_loadbufferx,gte=503"`
+
+	LuaLSetfuncs func(L unsafe.Pointer, l unsafe.Pointer, nup int) `ffi:"luaL_setfuncs,gte=503"`
 
 	LuaLTraceback func(L unsafe.Pointer, L1 unsafe.Pointer, msg *byte, level int) int `ffi:"luaL_traceback,gte=503"`
 

@@ -534,3 +534,35 @@ func (s *Suite) TestRef(assert *require.Assertions, L *lua.State) {
 
 	L.Unref(lua.LUA_REGISTRYINDEX, ref)
 }
+
+func (s *Suite) TestNewLib(assert *require.Assertions, L *lua.State) {
+	err := L.Requiref("mylib", func(L *lua.State) int {
+		l := []*lua.Reg{
+			{"add", func(L *lua.State) int {
+				L.PushNumber(L.ToNumber(1) + L.ToNumber(2))
+				return 1
+			}},
+		}
+		L.NewLib(l)
+
+		l2 := []*lua.Reg{
+			{"addwithupvalue", func(L *lua.State) int {
+				a := L.ToNumber(1)
+				b := L.ToNumber(2)
+				L.PushNumber(a + b + L.ToNumber(L.UpValueIndex(1)))
+				return 1
+			}},
+		}
+		L.PushNumber(10) // Upvalue for addwithupvalue
+		L.SetFuncs(l2, 1)
+		return 1
+	}, false)
+	assert.NoError(err)
+	L.Pop(1)
+
+	assert.NoError(L.DoString(`
+local mylib = require("mylib")
+assert(mylib.add(1, 2) == 3)
+assert(mylib.addwithupvalue(1, 2) == 13)  -- 1 + 2 + 10 (upvalue)
+	`))
+}
