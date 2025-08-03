@@ -202,6 +202,8 @@ func (s *State) PushLightUserData(ud any) (err error) {
 }
 
 // PushGoFunction pushes a Go CFunc as a Lua C function with no upvalues.
+// A Go function is not convertible once pushed onto the stack.
+// Use `ToCFunction` to get the C function pointer which wraps the Go function.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushcfunction
 func (s *State) PushGoFunction(f GoFunc) {
 	s.PushGoClousure(f, 0)

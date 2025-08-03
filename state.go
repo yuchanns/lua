@@ -363,3 +363,44 @@ func (s *State) Ref(idx int) int {
 func (s *State) Unref(idx int, ref int) {
 	s.ffi.LuaLUnref(s.luaL, idx, ref)
 }
+
+type Reg struct {
+	Name string
+	Func GoFunc
+}
+
+// SetFuncs registers a list of Go functions as Lua C API functions in the current state.
+// A null Reg will be added as a sentinel to mark the end of the list inside the method
+// so callers do not need to add it manually.
+func (s *State) SetFuncs(l []*Reg, nup int) {
+	var ll = make([]LuaLReg, 0, len(l)+1)
+	for _, reg := range l {
+		name, _ := tools.BytePtrFromString(reg.Name)
+		s.PushGoFunction(reg.Func)
+		ll = append(ll, LuaLReg{
+			Name: name,
+			// trampoline to the Go function
+			Func: s.ToCFunction(-1),
+		})
+		s.Pop(1)
+	}
+	ll = append(ll, LuaLReg{nil, nil}) // Add a sentinel entry with zero values
+	s.ffi.LuaLSetfuncs(s.luaL, unsafe.Pointer(unsafe.SliceData(ll)), nup)
+}
+
+// NewLibTable creates a new Lua table on the stack and sets it as the current library table.
+// A null Reg will be added as a sentinel to mark the end of the list inside the method
+// so callers do not need to add it manually.
+// This table can be used to register functions and variables for a Lua library.
+func (s *State) NewLibTable(l []*Reg) {
+	s.CreateTable(0, len(l))
+}
+
+// NewLib creates a new Lua library table and registers the provided Go functions in it.
+// This is a convenience method that combines NewLibTable and SetFuncs.
+// A null Reg will be added as a sentinel to mark the end of the list inside the method
+// so callers do not need to add it manually.
+func (s *State) NewLib(l []*Reg) {
+	s.NewLibTable(l)
+	s.SetFuncs(l, 0)
+}
