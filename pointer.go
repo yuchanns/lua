@@ -1,4 +1,4 @@
-package tools
+package lua
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"unsafe"
 )
 
-func ToLightUserData(ud any) (p unsafe.Pointer, err error) {
+func toLightUserData(ud any) (p unsafe.Pointer, err error) {
 	switch v := ud.(type) {
 	case unsafe.Pointer:
 		p = v

@@ -12,6 +12,7 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         version: ["5.4", "5.3"]
@@ -20,8 +21,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: ilammy/msvc-dev-cmd@v1
-        if: matrix.os == 'windows-latest'
       - name: Set module directory
         id: module
         shell: bash
@@ -29,25 +28,24 @@ jobs:
           VERSION="${{ matrix.version }}"
           VER="${VERSION//./}"
           echo "version=${VER}" >> $GITHUB_OUTPUT
+      - uses: yuchanns/actions-luamake@v1
       - name: Cache Lua dynamic library
         uses: actions/cache@v4
         id: cache
         with:
           path: |
             lua${{ steps.module.outputs.version }}/.lua
-          key: lua-${{ matrix.os }}-${{ matrix.version }}-${{ hashFiles('Makefile') }}
-          restore-keys: |
-            lua-${{ matrix.os }}-${{ matrix.version }}-
-      - name: Build Lua dynamic library
+          key: lua-${{ matrix.os }}-${{ hashFiles('make.lua') }}
+      - name: Build Lua
         if: steps.cache.outputs.cache-hit != 'true'
-        run: make lua${{ steps.module.outputs.version }}
+        run: luamake
         shell: bash
       - uses: actions/setup-go@v5
         with:
           go-version: stable
       - name: Run tests
         run: |
-          go test -v ./...
+          go test -gcflags=all=-d=checkptr -v -race
         env:
           CGO_ENABLE: 0 # Disable CGO to ensure pure Go tests
           LUA_VERSION: ${{ steps.module.outputs.version }}

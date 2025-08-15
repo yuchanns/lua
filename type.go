@@ -2,8 +2,6 @@ package lua
 
 import (
 	"unsafe"
-
-	"go.yuchanns.xyz/lua/internal/tools"
 )
 
 // IsNumber returns true if the value at idx is a number or can be converted to a number.
@@ -49,7 +47,7 @@ func (s *State) TypeName(tp int) string {
 	if p == nil {
 		return ""
 	}
-	return tools.BytePtrToString(p)
+	return bytePtrToString(p)
 }
 
 // IsFunction reports whether the value at idx is a Lua function.
@@ -116,7 +114,7 @@ func (s *State) ToLString(idx int, size *int) string {
 	if p == nil {
 		return ""
 	}
-	return tools.BytePtrToString(p)
+	return bytePtrToString(p)
 }
 
 // ToBoolean converts the Lua value at idx to a Go boolean.
@@ -185,7 +183,7 @@ func (s *State) CheckLString(idx int, size *int) string {
 	if size != nil {
 		sz = unsafe.Pointer(size)
 	}
-	return tools.BytePtrToString(s.ffi.LuaLChecklstring(s.luaL, idx, sz))
+	return bytePtrToString(s.ffi.LuaLChecklstring(s.luaL, idx, sz))
 }
 
 // CheckType checks whether the value at idx has the given type, raising error if not.
@@ -216,10 +214,10 @@ func (s *State) OptInteger(idx int, def int64) int64 {
 // Returns the Go string, or def.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_optlstring
 func (s *State) OptLString(idx int, def string, size *int) (string, error) {
-	d, err := tools.BytePtrFromString(def)
+	d, err := bytePtrFromString(def)
 	if err != nil {
 		return "", err
 	}
 	p := s.ffi.LuaLOptlstring(s.luaL, idx, d, unsafe.Pointer(size))
-	return tools.BytePtrToString(p), nil
+	return bytePtrToString(p), nil
 }

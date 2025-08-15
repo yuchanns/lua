@@ -1,9 +1,5 @@
 package lua
 
-import (
-	"go.yuchanns.xyz/lua/internal/tools"
-)
-
 // CreateTable creates a new empty table and pushes it onto the stack.
 // Narr and nrec are hints for the array and hash part sizes.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_createtable
@@ -27,7 +23,7 @@ func (s *State) SetTable(idx int) {
 // Returns the type of the pushed value.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_getfield
 func (s *State) GetField(idx int, k string) (typ int, err error) {
-	p, err := tools.BytePtrFromString(k)
+	p, err := bytePtrFromString(k)
 	if err != nil {
 		return
 	}
@@ -38,7 +34,7 @@ func (s *State) GetField(idx int, k string) (typ int, err error) {
 // SetField sets the field k of the table at idx using a value from the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setfield
 func (s *State) SetField(idx int, k string) (err error) {
-	p, err := tools.BytePtrFromString(k)
+	p, err := bytePtrFromString(k)
 	if err != nil {
 		return
 	}
@@ -93,7 +89,7 @@ func (s *State) RawSetI(idx int, n int64) {
 // UNSAFE: The caller must ensure pointer validity for the Lua state duration.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_rawgetp
 func (s *State) RawGetP(idx int, ud any) (typ int, err error) {
-	p, err := tools.ToLightUserData(ud)
+	p, err := toLightUserData(ud)
 	if err != nil {
 		return
 	}
@@ -105,7 +101,7 @@ func (s *State) RawGetP(idx int, ud any) (typ int, err error) {
 // UNSAFE: The caller must ensure pointer validity for the Lua state duration.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_rawsetp
 func (s *State) RawSetP(idx int, ud any) (err error) {
-	p, err := tools.ToLightUserData(ud)
+	p, err := toLightUserData(ud)
 	if err != nil {
 		return
 	}
@@ -136,7 +132,7 @@ func (s *State) SetIMetaTable(index int) int {
 // Returns true if the metatable already existed.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_newmetatable
 func (s *State) NewMetaTable(tname string) (has bool, err error) {
-	p, err := tools.BytePtrFromString(tname)
+	p, err := bytePtrFromString(tname)
 	if err != nil {
 		return
 	}
@@ -147,7 +143,7 @@ func (s *State) NewMetaTable(tname string) (has bool, err error) {
 // SetMetaTable sets the metatable of the value at the top of the stack to the named metatable.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_setmetatable
 func (s *State) SetMetaTable(tname string) (err error) {
-	p, err := tools.BytePtrFromString(tname)
+	p, err := bytePtrFromString(tname)
 	if err != nil {
 		return
 	}
@@ -165,7 +161,7 @@ func (s *State) GetMetaTable(tname string) (typ int, err error) {
 // Returns the type of the metafield.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_getmetafield
 func (s *State) GetMetaField(obj int, e string) (typ int, err error) {
-	p, err := tools.BytePtrFromString(e)
+	p, err := bytePtrFromString(e)
 	if err != nil {
 		return
 	}
@@ -177,7 +173,7 @@ func (s *State) GetMetaField(obj int, e string) (typ int, err error) {
 // Returns true if the metamethod exists and was called.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_callmeta
 func (s *State) CallMeta(obj int, e string) (has bool, err error) {
-	p, err := tools.BytePtrFromString(e)
+	p, err := bytePtrFromString(e)
 	if err != nil {
 		return
 	}

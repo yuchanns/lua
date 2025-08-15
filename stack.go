@@ -2,8 +2,6 @@ package lua
 
 import (
 	"unsafe"
-
-	"go.yuchanns.xyz/lua/internal/tools"
 )
 
 // RawEqual reports whether the values at the given indices are primitively equal (using Lua's raw equality).
@@ -127,7 +125,7 @@ func (s *State) PushInteger(n int64) {
 // PushLString pushes a given Go string onto the stack as a Lua string with explicit length.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushlstring
 func (s *State) PushLString(sv string) (ret *byte, err error) {
-	p, err := tools.BytePtrFromString(sv)
+	p, err := bytePtrFromString(sv)
 	if err != nil {
 		return
 	}
@@ -138,7 +136,7 @@ func (s *State) PushLString(sv string) (ret *byte, err error) {
 // PushString pushes a null-terminated string as a Lua string onto the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushstring
 func (s *State) PushString(sv string) (ret *byte, err error) {
-	p, err := tools.BytePtrFromString(sv)
+	p, err := bytePtrFromString(sv)
 	if err != nil {
 		return
 	}
@@ -160,7 +158,7 @@ func (s *State) PushGoClousure(f GoFunc, n int) {
 func (s *State) SetUpValue(funcindex int, n int) (name string) {
 	namePtr := s.ffi.LuaSetupvalue(s.luaL, funcindex, n)
 	if namePtr != nil {
-		name = tools.BytePtrToString(namePtr)
+		name = bytePtrToString(namePtr)
 	}
 	return
 }
@@ -169,7 +167,7 @@ func (s *State) SetUpValue(funcindex int, n int) (name string) {
 func (s *State) GetUpValue(funcindex int, n int) (name string) {
 	namePtr := s.ffi.LuaGetupvalue(s.luaL, funcindex, n)
 	if namePtr != nil {
-		name = tools.BytePtrToString(namePtr)
+		name = bytePtrToString(namePtr)
 	}
 	return
 }
@@ -193,7 +191,7 @@ func (s *State) PushBoolean(b bool) int {
 // UNSAFE: The userdata must be a pointer type, and it is the caller's responsibility to ensure
 // that the pointer remains valid for the lifetime of the Lua state.
 func (s *State) PushLightUserData(ud any) (err error) {
-	p, err := tools.ToLightUserData(ud)
+	p, err := toLightUserData(ud)
 	if err != nil {
 		return
 	}

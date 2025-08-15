@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 	"unsafe"
-
-	"go.yuchanns.xyz/lua/internal/tools"
 )
 
 type stateOpt struct {
@@ -130,20 +128,20 @@ func (s *State) checkUnprotectedError() error {
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_error
 func (s *State) Errorf(format string, args ...any) int {
 	msg := fmt.Sprintf(format, args...)
-	b, _ := tools.BytePtrFromString(msg)
+	b, _ := bytePtrFromString(msg)
 	return s.ffi.LuaLError(s.luaL, b)
 }
 
 // Traceback pushes a traceback message onto the stack, useful for debugging.
 func (s *State) Traceback(L1 *State, message string, level int) {
-	b, _ := tools.BytePtrFromString(message)
+	b, _ := bytePtrFromString(message)
 	s.ffi.LuaLTraceback(s.luaL, L1.luaL, b, level)
 }
 
 // SetGlobal sets a global variable in the Lua environment using the value at the top of the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setglobal
 func (s *State) SetGlobal(name string) (err error) {
-	n, err := tools.BytePtrFromString(name)
+	n, err := bytePtrFromString(name)
 	if err != nil {
 		return
 	}
@@ -154,7 +152,7 @@ func (s *State) SetGlobal(name string) (err error) {
 // GetGlobal retrieves a global variable from the Lua environment and pushes it onto the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_getglobal
 func (s *State) GetGlobal(name string) (err error) {
-	n, err := tools.BytePtrFromString(name)
+	n, err := bytePtrFromString(name)
 	if err != nil {
 		return
 	}
@@ -165,13 +163,13 @@ func (s *State) GetGlobal(name string) (err error) {
 // Load loads a Lua chunk from an io.Reader, compiling but not executing the code. This mirrors lua_load.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_load
 func (s *State) Load(r io.Reader, chunkname string, mode ...string) (err error) {
-	cname, err := tools.BytePtrFromString(chunkname)
+	cname, err := bytePtrFromString(chunkname)
 	if err != nil {
 		return
 	}
 	var m *byte
 	if len(mode) > 0 {
-		m, err = tools.BytePtrFromString(mode[0])
+		m, err = bytePtrFromString(mode[0])
 		if err != nil {
 			return
 		}
@@ -209,13 +207,13 @@ func (s *State) LoadBuffer(buff []byte, name string) (err error) {
 
 // LoadBufferx is the extended form of LoadBuffer supporting the mode parameter, as in luaL_loadbufferx.
 func (s *State) LoadBufferx(buff []byte, name string, mode ...string) (err error) {
-	b, err := tools.BytePtrFromString(name)
+	b, err := bytePtrFromString(name)
 	if err != nil {
 		return
 	}
 	var m *byte
 	if len(mode) > 0 {
-		m, err = tools.BytePtrFromString(mode[0])
+		m, err = bytePtrFromString(mode[0])
 		if err != nil {
 			return
 		}
@@ -242,7 +240,7 @@ func (s *State) DoString(scode string) (err error) {
 // LoadString loads a Lua chunk from a Go string with the provided source code.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_loadstring
 func (s *State) LoadString(scode string) (err error) {
-	n, err := tools.BytePtrFromString(scode)
+	n, err := bytePtrFromString(scode)
 	if err != nil {
 		return
 	}
@@ -263,13 +261,13 @@ func (s *State) DoFile(filename string) (err error) {
 // LoadFilex loads (but does not run) a Lua source file, optionally specifying the mode (text, binary, or both).
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_loadfilex
 func (s *State) LoadFilex(filename string, mode ...string) (err error) {
-	fname, err := tools.BytePtrFromString(filename)
+	fname, err := bytePtrFromString(filename)
 	if err != nil {
 		return
 	}
 	var m *byte
 	if len(mode) > 0 {
-		m, err = tools.BytePtrFromString(mode[0])
+		m, err = bytePtrFromString(mode[0])
 		if err != nil {
 			return
 		}
@@ -325,7 +323,7 @@ type WarnFunc func(L *State, msg string, tocont int)
 func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 	s.ffi.LuaSetwarnf(s.luaL, func(ud unsafe.Pointer, msg *byte, tocont int) {
 		state := s.clone(ud)
-		fn(state, tools.BytePtrToString(msg), tocont)
+		fn(state, bytePtrToString(msg), tocont)
 	}, ud)
 }
 
@@ -339,7 +337,7 @@ var NoOpKFunc KFunc = func(_ *State, _ int, _ unsafe.Pointer) int {
 
 // Requiref loads a Lua module by name, calling the provided Go function to open it.
 func (s *State) Requiref(modname string, openf GoFunc, global bool) (err error) {
-	mname, err := tools.BytePtrFromString(modname)
+	mname, err := bytePtrFromString(modname)
 	if err != nil {
 		return
 	}
@@ -375,7 +373,7 @@ type Reg struct {
 func (s *State) SetFuncs(l []*Reg, nup int) {
 	var ll = make([]LuaLReg, 0, len(l)+1)
 	for _, reg := range l {
-		name, _ := tools.BytePtrFromString(reg.Name)
+		name, _ := bytePtrFromString(reg.Name)
 		s.PushGoFunction(reg.Func)
 		ll = append(ll, LuaLReg{
 			Name: name,
