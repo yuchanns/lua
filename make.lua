@@ -38,6 +38,8 @@ local function lua_dll(version)
 		},
 		bindir = bindir,
 
+		c = "c99",
+
 		visibility = "default",
 		links = {
 			"m",
@@ -79,11 +81,13 @@ local function lua_dll(version)
 			lm.os == "windows" and lua_version .. ".dll"
 			or (lm.os == "macos" and "lib" .. lua_version .. ".dylib" or "lib" .. lua_version .. ".so")
 		)
-	lm:copy("copy_" .. lua_version)({
-		deps = { lua_version },
-		inputs = { bindir .. "/" .. lua_version .. ".so" },
-		outputs = { output },
-	})
+	if lm.os ~= "windows" then
+		lm:copy("copy_" .. lua_version)({
+			deps = { lua_version },
+			inputs = { bindir .. "/" .. lua_version .. ".so" },
+			outputs = { output },
+		})
+	end
 end
 
 for _, version in ipairs({ 54, 53 }) do
