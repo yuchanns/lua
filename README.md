@@ -85,10 +85,22 @@ func main() {
 
 ## Development
 
+### Clone
+
+```bash
+git clone --recurse-submodules https://github.com/yuchanns/lua
+```
+
+### Build Dependencies
+
+We use [luamake](https://github.com/actboy168/luamake) to build Lua.
+
+```bash
+luamake
+```
+
 ### Run Tests
 
 ```bash
-make lua54
-
 cd lua54 && go test -v .
 ```
