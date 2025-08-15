@@ -5,14 +5,110 @@ import (
 	"testing"
 	"unsafe"
 
+	"github.com/smasher164/mem"
 	"github.com/stretchr/testify/require"
 	"go.yuchanns.xyz/lua"
-	"go.yuchanns.xyz/lua/internal/tools"
 )
 
+type block struct {
+	size int
+}
+
+type arena struct {
+	allocCount     int
+	peakMemory     int
+	totalAllocated int
+}
+
+func (a *arena) ReAlloc(oldPtr unsafe.Pointer, size int) unsafe.Pointer {
+	blockSize := unsafe.Sizeof(block{})
+	a.allocCount++
+	if size == 0 {
+		if oldPtr != nil {
+			oldBlockPtr := unsafe.Pointer(uintptr(oldPtr) - uintptr(blockSize))
+			oldSize := (*block)(oldBlockPtr).size
+			a.totalAllocated -= alignUp(int(blockSize)+oldSize, 8)
+		}
+		mem.Free(oldPtr)
+		return nil
+	}
+
+	newTotalSize := alignUp(int(blockSize)+size, 8)
+
+	if oldPtr == nil {
+		blockPtr := mem.Alloc(uint(newTotalSize))
+		(*block)(blockPtr).size = size
+		a.totalAllocated += newTotalSize
+		if a.totalAllocated > a.peakMemory {
+			a.peakMemory = a.totalAllocated
+		}
+		return unsafe.Pointer(uintptr(blockPtr) + uintptr(blockSize))
+	}
+
+	oldBlockPtr := unsafe.Pointer(uintptr(oldPtr) - uintptr(blockSize))
+	oldSize := (*block)(oldBlockPtr).size
+	oldTotalSize := alignUp(int(blockSize)+oldSize, 8)
+
+	(*block)(oldBlockPtr).size = size
+	if size <= oldSize {
+		a.totalAllocated = a.totalAllocated - oldTotalSize + newTotalSize
+		return oldPtr
+	}
+
+	blockPtr := mem.Alloc(uint(newTotalSize))
+	ptr := unsafe.Pointer(uintptr(blockPtr) + uintptr(blockSize))
+	(*block)(blockPtr).size = size
+
+	if oldSize > 0 {
+		oldData := unsafe.Slice((*byte)(oldPtr), oldSize)
+		data := unsafe.Slice((*byte)(ptr), size)
+		copy(data, oldData[:oldSize])
+	}
+
+	mem.Free(oldBlockPtr)
+
+	a.totalAllocated = a.totalAllocated - oldTotalSize + newTotalSize
+
+	if a.totalAllocated > a.peakMemory {
+		a.peakMemory = a.totalAllocated
+	}
+
+	return ptr
+}
+
+func (a *arena) Free(ptr unsafe.Pointer) {
+	if ptr == nil {
+		return
+	}
+	blockSize := unsafe.Sizeof(block{})
+	blockPtr := unsafe.Pointer(uintptr(ptr) - uintptr(blockSize))
+	size := (*block)(blockPtr).size
+	totalSize := alignUp(int(blockSize)+size, 8)
+
+	a.totalAllocated -= totalSize
+
+	mem.Free(blockPtr)
+}
+
+func (a *arena) TotalAllocated() int {
+	return a.totalAllocated
+}
+
+func (a *arena) PeakMemory() int {
+	return a.peakMemory
+}
+
+func (a *arena) AllocCount() int {
+	return a.allocCount
+}
+
+func alignUp(n, align int) int {
+	return (n + align - 1) &^ (align - 1)
+}
+
 func (s *Suite) TestAllocTracking(assert *require.Assertions, t *testing.T) {
-	arena := tools.NewArena()
-	t.Cleanup(arena.FreeAll)
+	arena := &arena{}
+	// t.Cleanup(arena.FreeAll)
 
 	L, err := s.lib.NewState(lua.WithAlloc(trackingAlloc, arena))
 	assert.NoError(err)
@@ -32,8 +128,8 @@ func (s *Suite) TestAllocTracking(assert *require.Assertions, t *testing.T) {
 }
 
 func (s *Suite) TestAllocLimited(assert *require.Assertions, t *testing.T) {
-	arena := tools.NewArena()
-	t.Cleanup(arena.FreeAll)
+	arena := &arena{}
+	// t.Cleanup(arena.FreeAll)
 
 	limitedMem := &limitedMemory{Limit: 1024 * 1024, Arena: arena}
 
@@ -47,7 +143,7 @@ func (s *Suite) TestAllocLimited(assert *require.Assertions, t *testing.T) {
 	assert.Error(err)
 }
 
-func trackingAlloc(arena *tools.Arena, ptr unsafe.Pointer, osize, nsize int) (newPtr unsafe.Pointer) {
+func trackingAlloc(arena *arena, ptr unsafe.Pointer, osize, nsize int) (newPtr unsafe.Pointer) {
 	if nsize == 0 {
 		arena.Free(ptr)
 		return
@@ -57,7 +153,7 @@ func trackingAlloc(arena *tools.Arena, ptr unsafe.Pointer, osize, nsize int) (ne
 
 type limitedMemory struct {
 	Limit int
-	Arena *tools.Arena
+	Arena *arena
 }
 
 func limitedAlloc(limitedMem *limitedMemory, ptr unsafe.Pointer, osize, nsize int) (newPtr unsafe.Pointer) {
