@@ -1,6 +1,6 @@
 //go:build !windows
 
-package tools
+package lua
 
 import (
 	"github.com/ebitengine/purego"
@@ -14,7 +14,7 @@ var (
 	cacheMutex  sync.RWMutex
 )
 
-func BytePtrFromString(s string) (*byte, error) {
+func bytePtrFromString(s string) (*byte, error) {
 	if s == "" {
 		return new(byte), nil
 	}
@@ -27,18 +27,18 @@ func BytePtrFromString(s string) (*byte, error) {
 	return ptr, nil
 }
 
-func BytePtrToString(p *byte) string {
+func bytePtrToString(p *byte) string {
 	if p == nil {
 		return ""
 	}
 	return unix.BytePtrToString(p)
 }
 
-func LoadLibrary(path string) (uintptr, error) {
+func loadLibrary(path string) (uintptr, error) {
 	return purego.Dlopen(path, purego.RTLD_LAZY|purego.RTLD_GLOBAL)
 }
 
-func FreeLibrary(handle uintptr) error {
+func freeLibrary(handle uintptr) error {
 	if handle == 0 {
 		return nil
 	}
@@ -49,7 +49,7 @@ func FreeLibrary(handle uintptr) error {
 	return nil
 }
 
-func GetProcAddress(handle uintptr, name string) (uintptr, error) {
+func getProcAddress(handle uintptr, name string) (uintptr, error) {
 	if handle == 0 {
 		return 0, nil
 	}

@@ -3,8 +3,6 @@ package lua
 import (
 	"fmt"
 	"unsafe"
-
-	"go.yuchanns.xyz/lua/internal/tools"
 )
 
 // Lib represents a loaded Lua 5.4 dynamic library binding in Go. It provides access to library-level operations and state creation (see: https://www.lua.org/manual/5.4/manual.html#4.3).
@@ -33,7 +31,7 @@ func (l *Lib) Close() {
 		return
 	}
 
-	defer tools.FreeLibrary(l.ffi.lib)
+	defer freeLibrary(l.ffi.lib)
 
 	l.ffi = nil
 }

@@ -2,8 +2,6 @@ package lua
 
 import (
 	"unsafe"
-
-	"go.yuchanns.xyz/lua/internal/tools"
 )
 
 // NewUserData creates a new full userdata object of the given size, pushes it onto the stack, and returns its pointer.
@@ -62,7 +60,7 @@ func (s *State) SetUserValue(idx int) {
 // Raises an error if the type does not match.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_checkudata
 func (s *State) CheckUserData(ud int, tname string) (ptr unsafe.Pointer, err error) {
-	tptr, err := tools.BytePtrFromString(tname)
+	tptr, err := bytePtrFromString(tname)
 	if err != nil {
 		return
 	}
@@ -72,7 +70,7 @@ func (s *State) CheckUserData(ud int, tname string) (ptr unsafe.Pointer, err err
 // TestUserData tests whether the value at ud is a userdata of the type given by tname, returning its pointer or nil.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_testudata
 func (s *State) TestUserData(ud int, tname string) (ptr unsafe.Pointer, err error) {
-	tptr, err := tools.BytePtrFromString(tname)
+	tptr, err := bytePtrFromString(tname)
 	if err != nil {
 		return
 	}

@@ -7,7 +7,6 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
-	"go.yuchanns.xyz/lua/internal/tools"
 )
 
 // LuaReader represents the Go equivalent of the lua_Reader C callback type for streaming data into the Lua state.
@@ -214,7 +213,7 @@ func getLuaVersion(lib uintptr) (version float64) {
 // newFFI loads the Lua 5.4 dynamic library at the specified path and registers all available exported entrypoints.
 // It provides a Go ffi struct ready for low-level Lua C API interaction in memory.
 func newFFI(path string) (FFI *ffi, err error) {
-	lib, err := tools.LoadLibrary(path)
+	lib, err := loadLibrary(path)
 	if err != nil {
 		return
 	}

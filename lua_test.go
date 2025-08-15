@@ -1,18 +1,45 @@
 package lua_test
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"go.yuchanns.xyz/lua"
-	"go.yuchanns.xyz/lua/internal/tools"
 )
 
 type Suite struct {
 	lib *lua.Lib
+}
+
+func findLocalLuaLibrary(version string) (string, error) {
+	var pattern string
+
+	switch runtime.GOOS {
+	case "windows":
+		pattern = fmt.Sprintf("lua%s/.lua/lib/lua*%s*.dll", version, version)
+	case "darwin":
+		pattern = fmt.Sprintf("lua%s/.lua/lib/*lua*%s*.dylib", version, version)
+	default: // linux and other unix-like systems
+		pattern = fmt.Sprintf("lua%s/.lua/lib/*lua*%s*.so*", version, version)
+	}
+
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		return "", fmt.Errorf("failed to search for Lua library with pattern %s: %w", pattern, err)
+	}
+
+	if len(matches) == 0 {
+		return "", fmt.Errorf("no Lua library found matching pattern %s", pattern)
+	}
+
+	// Return the first match if multiple files are found
+	return matches[0], nil
 }
 
 func (s *Suite) Setup() (err error) {
@@ -20,7 +47,7 @@ func (s *Suite) Setup() (err error) {
 	if version == "" {
 		version = "54"
 	}
-	path, err := tools.FindLocalLuaLibrary(version)
+	path, err := findLocalLuaLibrary(version)
 	if err != nil {
 		return
 	}
