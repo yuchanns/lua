@@ -183,6 +183,11 @@ type ffi struct {
 	LuaLRequiref func(L unsafe.Pointer, modname *byte, openf LuaGoFunction, glb int) `ffi:"luaL_requiref,gte=503"`
 }
 
+// Lib returns the underlying dynamic library handle for this ffi instance.
+func (ffi *ffi) Lib() uintptr {
+	return ffi.lib
+}
+
 // getLuaVersion retrieves the Lua version from the loaded library.
 // It uses the lua_version function to determine the version number.
 // With this, we can conditionally register functions based on the Lua version.
