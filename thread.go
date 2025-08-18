@@ -7,7 +7,7 @@ import "unsafe"
 func (s *State) NewThread() *State {
 	L := s.ffi.LuaNewthread(s.luaL)
 
-	return s.clone(L)
+	return s.Clone(L)
 }
 
 // CloseThread closes the specified Lua thread (or the currently running thread if from is nil).
@@ -61,7 +61,7 @@ func (s *State) YieldK(nresults int, ctx unsafe.Pointer, k KFunc) (err error) {
 			defer panic(protectionMsg)
 		}
 
-		state := s.clone(L)
+		state := s.Clone(L)
 		return k(state, status, ctx)
 	})
 	if status != LUA_OK && status != LUA_YIELD {
@@ -114,7 +114,7 @@ func (s *State) IsYieldable() bool {
 // See: https://www.lua.org/manual/5.4/manual.html#lua_tothread
 func (s *State) ToThread(idx int) *State {
 	L := s.ffi.LuaTothread(s.luaL, idx)
-	return s.clone(L)
+	return s.Clone(L)
 }
 
 // ToPointer returns the Lua value at the given stack index as an unsafe.Pointer.

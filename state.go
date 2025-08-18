@@ -93,7 +93,7 @@ type GoFunc func(L *State) int
 // See: https://www.lua.org/manual/5.4/manual.html#lua_atpanic
 func (s *State) AtPanic(fn GoFunc) (old unsafe.Pointer) {
 	panicf := func(L unsafe.Pointer) int {
-		state := s.clone(L)
+		state := s.Clone(L)
 		return fn(state)
 	}
 	return s.ffi.LuaAtpanic(s.luaL, panicf)
@@ -119,7 +119,7 @@ func (s *State) CheckError(status int) error {
 	}
 }
 
-func (s *State) clone(L unsafe.Pointer) *State {
+func (s *State) Clone(L unsafe.Pointer) *State {
 	return &State{
 		ffi:                 s.ffi,
 		luaL:                L,
@@ -332,7 +332,7 @@ type WarnFunc func(L *State, msg string, tocont int)
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setwarnf
 func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 	s.ffi.LuaSetwarnf(s.luaL, func(ud unsafe.Pointer, msg *byte, tocont int) {
-		state := s.clone(ud)
+		state := s.Clone(ud)
 		fn(state, bytePtrToString(msg), tocont)
 	}, ud)
 }
@@ -356,7 +356,7 @@ func (s *State) Requiref(modname string, openf GoFunc, global bool) (err error) 
 		glb = 1
 	}
 	s.ffi.LuaLRequiref(s.luaL, mname, func(L unsafe.Pointer) int {
-		state := s.clone(L)
+		state := s.Clone(L)
 		return openf(state)
 	}, glb)
 	return
