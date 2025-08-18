@@ -58,6 +58,16 @@ func newState(ffi *ffi, o *stateOpt) (L *State) {
 	return L
 }
 
+// FFI returns the ffi instance used by this Lua state.
+func (s *State) FFI() *ffi {
+	return s.ffi
+}
+
+// L returns the underlying unsafe.Pointer to the Lua state, allowing direct access to and modify the C API.
+func (s *State) L() unsafe.Pointer {
+	return s.luaL
+}
+
 // OpenLibs loads all standard Lua libraries into the current state.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_openlibs
 func (s *State) OpenLibs() {
