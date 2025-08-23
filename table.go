@@ -93,7 +93,6 @@ func (s *State) RawGetP(idx int, ud any) (typ int) {
 func (s *State) RawSetP(idx int, ud any) {
 	p := toLightUserData(ud)
 	s.ffi.LuaRawsetp(s.luaL, idx, p)
-	return
 }
 
 // Next pops a key from the stack, and pushes the next key-value pair from table at idx.

@@ -187,7 +187,6 @@ func (s *State) PushBoolean(b bool) int {
 func (s *State) PushLightUserData(ud any) {
 	p := toLightUserData(ud)
 	s.ffi.LuaPushlightuserdata(s.luaL, p)
-	return
 }
 
 // PushGoFunction pushes a Go CFunc as a Lua C function with no upvalues.
