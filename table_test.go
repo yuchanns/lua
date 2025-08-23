@@ -191,23 +191,19 @@ func (s *Suite) TestTableRaw(assert *require.Assertions, L *lua.State) {
 	testInt := 42
 
 	L.PushString("value_for_string_ptr")
-	err := L.RawSetP(tableIdx, &testString)
-	assert.NoError(err)
+	L.RawSetP(tableIdx, &testString)
 
 	L.PushInteger(999)
-	err = L.RawSetP(tableIdx, &testInt)
-	assert.NoError(err)
+	L.RawSetP(tableIdx, &testInt)
 
-	typ, err = L.RawGetP(tableIdx, &testString)
-	assert.NoError(err)
+	typ = L.RawGetP(tableIdx, &testString)
 	assert.NotEqual(lua.LUA_TNIL, typ)
 	assert.True(L.IsString(-1))
 	ptrValue := L.ToString(-1)
 	assert.Equal("value_for_string_ptr", ptrValue)
 	L.Pop(1)
 
-	typ, err = L.RawGetP(tableIdx, &testInt)
-	assert.NoError(err)
+	typ = L.RawGetP(tableIdx, &testInt)
 	assert.NotEqual(lua.LUA_TNIL, typ)
 	assert.True(L.IsInteger(-1))
 	intPtrValue := L.ToInteger(-1)
@@ -215,8 +211,7 @@ func (s *Suite) TestTableRaw(assert *require.Assertions, L *lua.State) {
 	L.Pop(1)
 
 	anotherInt := 123
-	typ, err = L.RawGetP(tableIdx, &anotherInt)
-	assert.NoError(err)
+	typ = L.RawGetP(tableIdx, &anotherInt)
 	assert.Equal(lua.LUA_TNIL, typ)
 	assert.True(L.IsNil(-1))
 	L.Pop(1)
