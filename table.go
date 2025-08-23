@@ -81,11 +81,8 @@ func (s *State) RawSetI(idx int, n int64) {
 // RawGetP retrieves a value from a table at idx using a light userdata as the key.
 // UNSAFE: The caller must ensure pointer validity for the Lua state duration.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_rawgetp
-func (s *State) RawGetP(idx int, ud any) (typ int, err error) {
-	p, err := toLightUserData(ud)
-	if err != nil {
-		return
-	}
+func (s *State) RawGetP(idx int, ud any) (typ int) {
+	p := toLightUserData(ud)
 	typ = int(s.ffi.LuaRawgetp(s.luaL, idx, p))
 	return
 }
@@ -93,13 +90,9 @@ func (s *State) RawGetP(idx int, ud any) (typ int, err error) {
 // RawSetP stores a value in a table at idx using a light userdata key.
 // UNSAFE: The caller must ensure pointer validity for the Lua state duration.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_rawsetp
-func (s *State) RawSetP(idx int, ud any) (err error) {
-	p, err := toLightUserData(ud)
-	if err != nil {
-		return
-	}
+func (s *State) RawSetP(idx int, ud any) {
+	p := toLightUserData(ud)
 	s.ffi.LuaRawsetp(s.luaL, idx, p)
-	return
 }
 
 // Next pops a key from the stack, and pushes the next key-value pair from table at idx.

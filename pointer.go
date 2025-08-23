@@ -6,15 +6,14 @@ import (
 	"unsafe"
 )
 
-func toLightUserData(ud any) (p unsafe.Pointer, err error) {
+func toLightUserData(ud any) (p unsafe.Pointer) {
 	switch v := ud.(type) {
 	case unsafe.Pointer:
 		p = v
 	default:
 		val := reflect.ValueOf(ud)
 		if val.Kind() != reflect.Ptr {
-			err = fmt.Errorf("expected a pointer, got %T", ud)
-			return
+			panic(fmt.Sprintf("expected a pointer, got %T", ud))
 		}
 		p = unsafe.Pointer(val.Pointer())
 	}

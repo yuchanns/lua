@@ -16,8 +16,7 @@ type testObject struct {
 func (s *Suite) TestTypeLightUserData(assert *require.Assertions, L *lua.State) {
 	var testVar = &testObject{id: 123}
 	testVar.data[0] = 42
-	err := L.PushLightUserData(testVar)
-	assert.NoError(err)
+	L.PushLightUserData(testVar)
 
 	assert.True(L.IsLightUserData(-1))
 	assert.Equal(lua.LUA_TLIGHTUSERDATA, L.Type(-1))
@@ -34,20 +33,19 @@ func (s *Suite) TestTypeLightUserData(assert *require.Assertions, L *lua.State) 
 
 	L.Pop(1)
 	unsafePtr := unsafe.Pointer(&testVar)
-	err = L.PushLightUserData(unsafePtr)
-	assert.NoError(err)
+	L.PushLightUserData(unsafePtr)
 
 	assert.True(L.IsLightUserData(-1))
 	retrievedUnsafePtr := L.ToUserData(-1)
 	assert.Equal(unsafePtr, retrievedUnsafePtr)
 
 	L.Pop(1)
-	err = L.PushLightUserData(42)
-	assert.Error(err)
+	assert.Panics(func() {
+		L.PushLightUserData(42)
+	})
 
 	var nilPtr *int
-	err = L.PushLightUserData(nilPtr)
-	assert.NoError(err)
+	L.PushLightUserData(nilPtr)
 	assert.True(L.IsLightUserData(-1))
 
 	nilPtrRetrieved := L.ToUserData(-1)
@@ -57,8 +55,7 @@ func (s *Suite) TestTypeLightUserData(assert *require.Assertions, L *lua.State) 
 func (s *Suite) TestTypeToPointer(assert *require.Assertions, L *lua.State) {
 	var testVar = &testObject{id: 456}
 	testVar.data[0] = 84
-	err := L.PushLightUserData(testVar)
-	assert.NoError(err)
+	L.PushLightUserData(testVar)
 
 	assert.True(L.IsLightUserData(-1))
 	assert.Equal(lua.LUA_TLIGHTUSERDATA, L.Type(-1))
@@ -75,8 +72,7 @@ func (s *Suite) TestTypeToPointer(assert *require.Assertions, L *lua.State) {
 
 	// Test with nil pointer
 	var nilPtr *int
-	err = L.PushLightUserData(nilPtr)
-	assert.NoError(err)
+	L.PushLightUserData(nilPtr)
 	nilPtrRetrieved := L.ToPointer(-1)
 	assert.Nil(nilPtrRetrieved)
 
@@ -172,8 +168,7 @@ func (s *Suite) TestTypeToRawLen(assert *require.Assertions, L *lua.State) {
 	L.Pop(1)
 
 	var testVar = 42
-	err := L.PushLightUserData(&testVar)
-	assert.NoError(err)
+	L.PushLightUserData(&testVar)
 
 	rawLen = L.RawLen(-1)
 	assert.Equal(uint(0), rawLen)

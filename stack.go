@@ -184,13 +184,9 @@ func (s *State) PushBoolean(b bool) int {
 // PushLightUserData pushes a light userdata onto the stack.
 // UNSAFE: The userdata must be a pointer type, and it is the caller's responsibility to ensure
 // that the pointer remains valid for the lifetime of the Lua state.
-func (s *State) PushLightUserData(ud any) (err error) {
-	p, err := toLightUserData(ud)
-	if err != nil {
-		return
-	}
+func (s *State) PushLightUserData(ud any) {
+	p := toLightUserData(ud)
 	s.ffi.LuaPushlightuserdata(s.luaL, p)
-	return
 }
 
 // PushGoFunction pushes a Go CFunc as a Lua C function with no upvalues.
