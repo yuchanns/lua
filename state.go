@@ -327,7 +327,6 @@ func (s *State) Requiref(modname string, openf GoFunc, global bool) {
 		state := s.Clone(L)
 		return openf(state)
 	}, glb)
-	return
 }
 
 // Ref creates a reference to the value at the given stack index, returning a unique reference ID.

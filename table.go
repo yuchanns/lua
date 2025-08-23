@@ -33,7 +33,6 @@ func (s *State) GetField(idx int, k string) (typ int) {
 func (s *State) SetField(idx int, k string) {
 	p, _ := bytePtrFromString(k)
 	s.ffi.LuaSetfield(s.luaL, idx, p)
-	return
 }
 
 // GetI pushes onto the stack the value n from the table at idx (uses integer key n).
@@ -136,7 +135,6 @@ func (s *State) NewMetaTable(tname string) (has bool) {
 func (s *State) SetMetaTable(tname string) {
 	p, _ := bytePtrFromString(tname)
 	s.ffi.LuaLSetmetatable(s.luaL, p)
-	return
 }
 
 // GetMetaTable retrieves the metatable associated with the given name from the registry.
