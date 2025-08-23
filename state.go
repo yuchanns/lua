@@ -153,7 +153,6 @@ func (s *State) Traceback(L1 *State, message string, level int) {
 func (s *State) SetGlobal(name string) {
 	n, _ := bytePtrFromString(name)
 	s.ffi.LuaSetglobal(s.luaL, n)
-	return
 }
 
 // GetGlobal retrieves a global variable from the Lua environment and pushes it onto the stack.
@@ -161,7 +160,6 @@ func (s *State) SetGlobal(name string) {
 func (s *State) GetGlobal(name string) {
 	n, _ := bytePtrFromString(name)
 	s.ffi.LuaGetglobal(s.luaL, n)
-	return
 }
 
 // Load loads a Lua chunk from an io.Reader, compiling but not executing the code. This mirrors lua_load.

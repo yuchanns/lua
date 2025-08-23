@@ -608,7 +608,7 @@ func (s *Suite) TestRequiref(assert *require.Assertions, L *lua.State) {
 		return 1
 	}, false)
 
-	L.DoString(`local m = require("testmodule"); return m`)
+	assert.NoError(L.DoString(`local m = require("testmodule"); return m`))
 
 	assert.True(L.IsString(-1))
 	assert.Equal("Hello from testmodule", L.ToString(-1))

@@ -33,7 +33,7 @@ func (s *Suite) TestThread(assert *require.Assertions, L *lua.State) {
 }
 
 func (s *Suite) TestThreadScript(assert *require.Assertions, L *lua.State) {
-	L.DoFile("testdata/coro.lua")
+	assert.NoError(L.DoFile("testdata/coro.lua"))
 	co := L.ToThread(-1)
 	assert.NotNil(co)
 	assert.Equal(lua.LUA_OK, co.Status())

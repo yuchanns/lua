@@ -171,7 +171,7 @@ func (s *Suite) TestTypeToRawLen(assert *require.Assertions, L *lua.State) {
 
 	L.Pop(1)
 
-	var testVar int = 42
+	var testVar = 42
 	err := L.PushLightUserData(&testVar)
 	assert.NoError(err)
 

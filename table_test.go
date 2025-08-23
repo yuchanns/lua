@@ -319,9 +319,10 @@ func (s *Suite) TestTableNext(assert *require.Assertions, L *lua.State) {
 		valueType := L.Type(-1)
 
 		var keyStr string
-		if keyType == lua.LUA_TSTRING {
+		switch keyType {
+		case lua.LUA_TSTRING:
 			keyStr = L.ToString(-2)
-		} else if keyType == lua.LUA_TNUMBER {
+		case lua.LUA_TNUMBER:
 			keyStr = fmt.Sprintf("%d", L.ToInteger(-2))
 		}
 

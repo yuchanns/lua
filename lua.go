@@ -26,14 +26,16 @@ func New(path string) (lib *Lib, err error) {
 }
 
 // Close releases the loaded Lua dynamic library and any resources associated with it in this Lib instance.
-func (l *Lib) Close() {
+func (l *Lib) Close() (err error) {
 	if l.ffi == nil {
 		return
 	}
 
-	defer freeLibrary(l.ffi.lib)
-
-	l.ffi = nil
+	err = freeLibrary(l.ffi.lib)
+	if err == nil {
+		l.ffi = nil
+	}
+	return
 }
 
 // NewState creates a new Lua runtime state from this Lib (binding to the dynamic library).
@@ -41,7 +43,7 @@ func (l *Lib) Close() {
 // Returns a State and possibly an error if the library is closed.
 func (l *Lib) NewState(o ...stateOptFunc) (state *State, err error) {
 	if l.ffi == nil {
-		return nil, fmt.Errorf("Lua library is closed")
+		return nil, fmt.Errorf("lua library is closed")
 	}
 
 	opt := &stateOpt{}
