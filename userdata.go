@@ -59,20 +59,14 @@ func (s *State) SetUserValue(idx int) {
 // CheckUserData checks that the value at ud is a userdata of the type given by tname and returns its pointer.
 // Raises an error if the type does not match.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_checkudata
-func (s *State) CheckUserData(ud int, tname string) (ptr unsafe.Pointer, err error) {
-	tptr, err := bytePtrFromString(tname)
-	if err != nil {
-		return
-	}
-	return s.ffi.LuaLCheckudata(s.luaL, ud, tptr), nil
+func (s *State) CheckUserData(ud int, tname string) (ptr unsafe.Pointer) {
+	tptr, _ := bytePtrFromString(tname)
+	return s.ffi.LuaLCheckudata(s.luaL, ud, tptr)
 }
 
 // TestUserData tests whether the value at ud is a userdata of the type given by tname, returning its pointer or nil.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_testudata
-func (s *State) TestUserData(ud int, tname string) (ptr unsafe.Pointer, err error) {
-	tptr, err := bytePtrFromString(tname)
-	if err != nil {
-		return
-	}
-	return s.ffi.LuaLTestudata(s.luaL, ud, tptr), nil
+func (s *State) TestUserData(ud int, tname string) (ptr unsafe.Pointer) {
+	tptr, _ := bytePtrFromString(tname)
+	return s.ffi.LuaLTestudata(s.luaL, ud, tptr)
 }

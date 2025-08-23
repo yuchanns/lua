@@ -124,22 +124,16 @@ func (s *State) PushInteger(n int64) {
 
 // PushLString pushes a given Go string onto the stack as a Lua string with explicit length.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushlstring
-func (s *State) PushLString(sv string) (ret *byte, err error) {
-	p, err := bytePtrFromString(sv)
-	if err != nil {
-		return
-	}
+func (s *State) PushLString(sv string) (ret *byte) {
+	p, _ := bytePtrFromString(sv)
 	ret = s.ffi.LuaPushlstring(s.luaL, p, len(sv))
 	return
 }
 
 // PushString pushes a null-terminated string as a Lua string onto the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushstring
-func (s *State) PushString(sv string) (ret *byte, err error) {
-	p, err := bytePtrFromString(sv)
-	if err != nil {
-		return
-	}
+func (s *State) PushString(sv string) (ret *byte) {
+	p, _ := bytePtrFromString(sv)
 	ret = s.ffi.LuaPushstring(s.luaL, p)
 	return
 }

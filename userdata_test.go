@@ -29,27 +29,22 @@ func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {
 	L.NewMetaTable(mtName)
 	L.SetIMetaTable(udIdx)
 
-	ptr, err := L.CheckUserData(udIdx, mtName)
-	assert.NoError(err)
+	ptr := L.CheckUserData(udIdx, mtName)
 	assert.True(uintptr(ptr) > 0)
 
-	ptr, err = L.TestUserData(udIdx, mtName)
-	assert.NoError(err)
+	ptr = L.TestUserData(udIdx, mtName)
 	assert.Equal(ptr, ptr)
 
 	L.NewTable()
 	L.SetIMetaTable(udIdx)
-	ptr, err = L.TestUserData(udIdx, mtName)
-	assert.NoError(err)
+	ptr = L.TestUserData(udIdx, mtName)
 	assert.Nil(ptr)
 
 	L.PushInteger(99)
-	ptr4, err4 := L.TestUserData(L.GetTop(), mtName)
-	assert.NoError(err4)
+	ptr4 := L.TestUserData(L.GetTop(), mtName)
 	assert.Nil(ptr4)
 
-	ptr, err = L.TestUserData(9999, mtName)
-	assert.NoError(err)
+	ptr = L.TestUserData(9999, mtName)
 	assert.Nil(ptr)
 
 	assert.NotNil(L.NewUserData(16))

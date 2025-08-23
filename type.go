@@ -213,11 +213,8 @@ func (s *State) OptInteger(idx int, def int64) int64 {
 // OptLString fetches an optional string arg at idx, or uses def if not present or not string.
 // Returns the Go string, or def.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_optlstring
-func (s *State) OptLString(idx int, def string, size *int) (string, error) {
-	d, err := bytePtrFromString(def)
-	if err != nil {
-		return "", err
-	}
+func (s *State) OptLString(idx int, def string, size *int) (string) {
+	d, _ := bytePtrFromString(def)
 	p := s.ffi.LuaLOptlstring(s.luaL, idx, d, unsafe.Pointer(size))
-	return bytePtrToString(p), nil
+	return bytePtrToString(p)
 }

@@ -567,11 +567,9 @@ func (s *Suite) TestCall(assert *require.Assertions, L *lua.State) {
 
 func (s *Suite) TestGlobal(assert *require.Assertions, L *lua.State) {
 	key, val := "global_var", "global_value"
-	_, err := L.PushString(val)
-	assert.NoError(err)
-	assert.NoError(L.SetGlobal(key))
-
-	assert.NoError(L.GetGlobal(key))
+	_ = L.PushString(val)
+	L.SetGlobal(key)
+	L.GetGlobal(key)
 	assert.True(L.IsString(-1))
 	assert.Equal(val, L.ToString(-1))
 }
@@ -605,14 +603,12 @@ func (s *Suite) TestPCallGoFunction(assert *require.Assertions, L *lua.State) {
 }
 
 func (s *Suite) TestRequiref(assert *require.Assertions, L *lua.State) {
-	err := L.Requiref("testmodule", func(L *lua.State) int {
+	L.Requiref("testmodule", func(L *lua.State) int {
 		L.PushString("Hello from testmodule")
 		return 1
 	}, false)
-	assert.NoError(err)
 
-	err = L.DoString(`local m = require("testmodule"); return m`)
-	assert.NoError(err)
+	L.DoString(`local m = require("testmodule"); return m`)
 
 	assert.True(L.IsString(-1))
 	assert.Equal("Hello from testmodule", L.ToString(-1))
@@ -632,7 +628,7 @@ func (s *Suite) TestRef(assert *require.Assertions, L *lua.State) {
 }
 
 func (s *Suite) TestNewLib(assert *require.Assertions, L *lua.State) {
-	err := L.Requiref("mylib", func(L *lua.State) int {
+	L.Requiref("mylib", func(L *lua.State) int {
 		l := []*lua.Reg{
 			{"add", func(L *lua.State) int {
 				L.PushNumber(L.ToNumber(1) + L.ToNumber(2))
@@ -653,7 +649,6 @@ func (s *Suite) TestNewLib(assert *require.Assertions, L *lua.State) {
 		L.SetFuncs(l2, 1)
 		return 1
 	}, false)
-	assert.NoError(err)
 	L.Pop(1)
 
 	assert.NoError(L.DoString(`

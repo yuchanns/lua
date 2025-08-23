@@ -22,22 +22,16 @@ func (s *State) SetTable(idx int) {
 // GetField pushes onto the stack the value of the field k from the table at idx.
 // Returns the type of the pushed value.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_getfield
-func (s *State) GetField(idx int, k string) (typ int, err error) {
-	p, err := bytePtrFromString(k)
-	if err != nil {
-		return
-	}
+func (s *State) GetField(idx int, k string) (typ int) {
+	p, _ := bytePtrFromString(k)
 	typ = int(s.ffi.LuaGetfield(s.luaL, idx, p))
 	return
 }
 
 // SetField sets the field k of the table at idx using a value from the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setfield
-func (s *State) SetField(idx int, k string) (err error) {
-	p, err := bytePtrFromString(k)
-	if err != nil {
-		return
-	}
+func (s *State) SetField(idx int, k string) {
+	p, _ := bytePtrFromString(k)
 	s.ffi.LuaSetfield(s.luaL, idx, p)
 	return
 }
@@ -131,40 +125,31 @@ func (s *State) SetIMetaTable(index int) int {
 // NewMetaTable creates a new metatable with the given name and pushes it onto the stack.
 // Returns true if the metatable already existed.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_newmetatable
-func (s *State) NewMetaTable(tname string) (has bool, err error) {
-	p, err := bytePtrFromString(tname)
-	if err != nil {
-		return
-	}
+func (s *State) NewMetaTable(tname string) (has bool) {
+	p, _ := bytePtrFromString(tname)
 	has = s.ffi.LuaLNewmetatable(s.luaL, p) == 0
 	return
 }
 
 // SetMetaTable sets the metatable of the value at the top of the stack to the named metatable.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_setmetatable
-func (s *State) SetMetaTable(tname string) (err error) {
-	p, err := bytePtrFromString(tname)
-	if err != nil {
-		return
-	}
+func (s *State) SetMetaTable(tname string) {
+	p, _ := bytePtrFromString(tname)
 	s.ffi.LuaLSetmetatable(s.luaL, p)
 	return
 }
 
 // GetMetaTable retrieves the metatable associated with the given name from the registry.
 // Returns the type of the metatable.
-func (s *State) GetMetaTable(tname string) (typ int, err error) {
+func (s *State) GetMetaTable(tname string) (typ int) {
 	return s.GetField(LUA_REGISTRYINDEX, tname)
 }
 
 // GetMetaField pushes the named metafield of the given object onto the stack.
 // Returns the type of the metafield.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_getmetafield
-func (s *State) GetMetaField(obj int, e string) (typ int, err error) {
-	p, err := bytePtrFromString(e)
-	if err != nil {
-		return
-	}
+func (s *State) GetMetaField(obj int, e string) (typ int) {
+	p, _ := bytePtrFromString(e)
 	typ = int(s.ffi.LuaLGetmetafield(s.luaL, obj, p))
 	return
 }
@@ -172,11 +157,8 @@ func (s *State) GetMetaField(obj int, e string) (typ int, err error) {
 // CallMeta calls the named metamethod on the given object.
 // Returns true if the metamethod exists and was called.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_callmeta
-func (s *State) CallMeta(obj int, e string) (has bool, err error) {
-	p, err := bytePtrFromString(e)
-	if err != nil {
-		return
-	}
+func (s *State) CallMeta(obj int, e string) (has bool) {
+	p, _ := bytePtrFromString(e)
 	has = s.ffi.LuaLCallmeta(s.luaL, obj, p) == 1
 	return
 }
