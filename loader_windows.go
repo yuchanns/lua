@@ -4,13 +4,6 @@ package lua
 
 import (
 	"golang.org/x/sys/windows"
-	"sync"
-)
-
-// String cache to avoid repeated allocations for common strings
-var (
-	stringCache = make(map[string]*byte)
-	cacheMutex  sync.RWMutex
 )
 
 func bytePtrFromString(s string) (*byte, error) {

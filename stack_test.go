@@ -490,14 +490,14 @@ func (s *Suite) TestStackLen(assert *require.Assertions, L *lua.State) {
 
 	L.Pop(1)
 
-	L.LoadString("return {10, 20, 30, 40}")
+	assert.NoError(L.LoadString("return {10, 20, 30, 40}"))
 	L.Call(0, 1)
 	L.Len(-1)
 	assert.Equal(int64(4), L.ToInteger(-1))
 
 	L.Pop(2)
 
-	L.LoadString("return {}")
+	assert.NoError(L.LoadString("return {}"))
 	L.Call(0, 1)
 	L.Len(-1)
 	assert.Equal(int64(0), L.ToInteger(-1))

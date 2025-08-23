@@ -150,39 +150,25 @@ func (s *State) Traceback(L1 *State, message string, level int) {
 
 // SetGlobal sets a global variable in the Lua environment using the value at the top of the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setglobal
-func (s *State) SetGlobal(name string) (err error) {
-	n, err := bytePtrFromString(name)
-	if err != nil {
-		return
-	}
+func (s *State) SetGlobal(name string) {
+	n, _ := bytePtrFromString(name)
 	s.ffi.LuaSetglobal(s.luaL, n)
-	return
 }
 
 // GetGlobal retrieves a global variable from the Lua environment and pushes it onto the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_getglobal
-func (s *State) GetGlobal(name string) (err error) {
-	n, err := bytePtrFromString(name)
-	if err != nil {
-		return
-	}
+func (s *State) GetGlobal(name string) {
+	n, _ := bytePtrFromString(name)
 	s.ffi.LuaGetglobal(s.luaL, n)
-	return
 }
 
 // Load loads a Lua chunk from an io.Reader, compiling but not executing the code. This mirrors lua_load.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_load
 func (s *State) Load(r io.Reader, chunkname string, mode ...string) (err error) {
-	cname, err := bytePtrFromString(chunkname)
-	if err != nil {
-		return
-	}
+	cname, _ := bytePtrFromString(chunkname)
 	var m *byte
 	if len(mode) > 0 {
-		m, err = bytePtrFromString(mode[0])
-		if err != nil {
-			return
-		}
+		m, _ = bytePtrFromString(mode[0])
 	}
 
 	buf := make([]byte, 4096)
@@ -217,16 +203,10 @@ func (s *State) LoadBuffer(buff []byte, name string) (err error) {
 
 // LoadBufferx is the extended form of LoadBuffer supporting the mode parameter, as in luaL_loadbufferx.
 func (s *State) LoadBufferx(buff []byte, name string, mode ...string) (err error) {
-	b, err := bytePtrFromString(name)
-	if err != nil {
-		return
-	}
+	b, _ := bytePtrFromString(name)
 	var m *byte
 	if len(mode) > 0 {
-		m, err = bytePtrFromString(mode[0])
-		if err != nil {
-			return
-		}
+		m, _ = bytePtrFromString(mode[0])
 	}
 	var bf *byte
 	var sz = len(buff)
@@ -250,10 +230,7 @@ func (s *State) DoString(scode string) (err error) {
 // LoadString loads a Lua chunk from a Go string with the provided source code.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_loadstring
 func (s *State) LoadString(scode string) (err error) {
-	n, err := bytePtrFromString(scode)
-	if err != nil {
-		return
-	}
+	n, _ := bytePtrFromString(scode)
 	err = s.CheckError(s.ffi.LuaLLoadstring(s.luaL, n))
 	return
 }
@@ -271,16 +248,10 @@ func (s *State) DoFile(filename string) (err error) {
 // LoadFilex loads (but does not run) a Lua source file, optionally specifying the mode (text, binary, or both).
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_loadfilex
 func (s *State) LoadFilex(filename string, mode ...string) (err error) {
-	fname, err := bytePtrFromString(filename)
-	if err != nil {
-		return
-	}
+	fname, _ := bytePtrFromString(filename)
 	var m *byte
 	if len(mode) > 0 {
-		m, err = bytePtrFromString(mode[0])
-		if err != nil {
-			return
-		}
+		m, _ = bytePtrFromString(mode[0])
 	}
 	err = s.CheckError(s.ffi.LuaLLoadfilex(s.luaL, fname, m))
 	return
@@ -346,11 +317,8 @@ var NoOpKFunc KFunc = func(_ *State, _ int, _ unsafe.Pointer) int {
 }
 
 // Requiref loads a Lua module by name, calling the provided Go function to open it.
-func (s *State) Requiref(modname string, openf GoFunc, global bool) (err error) {
-	mname, err := bytePtrFromString(modname)
-	if err != nil {
-		return
-	}
+func (s *State) Requiref(modname string, openf GoFunc, global bool) {
+	mname, _ := bytePtrFromString(modname)
 	var glb int
 	if global {
 		glb = 1
@@ -359,7 +327,6 @@ func (s *State) Requiref(modname string, openf GoFunc, global bool) (err error) 
 		state := s.Clone(L)
 		return openf(state)
 	}, glb)
-	return
 }
 
 // Ref creates a reference to the value at the given stack index, returning a unique reference ID.

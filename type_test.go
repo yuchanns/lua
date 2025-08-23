@@ -171,7 +171,7 @@ func (s *Suite) TestTypeToRawLen(assert *require.Assertions, L *lua.State) {
 
 	L.Pop(1)
 
-	var testVar int = 42
+	var testVar = 42
 	err := L.PushLightUserData(&testVar)
 	assert.NoError(err)
 
@@ -185,14 +185,14 @@ func (s *Suite) TestFunction(assert *require.Assertions, L *lua.State) {
 		assert.Equal(number, 42.0)
 		return 0
 	})
-	assert.NoError(L.SetGlobal("print_number"))
+	L.SetGlobal("print_number")
 
 	L.PushGoFunction(func(L *lua.State) int {
 		x := L.CheckNumber(1)
 		L.PushNumber(x * 2)
 		return 1
 	})
-	assert.NoError(L.SetGlobal("double_number"))
+	L.SetGlobal("double_number")
 
 	assert.NoError(L.DoString(`print_number(double_number(21))`))
 }
@@ -495,72 +495,62 @@ func (s *Suite) TestOptLString(assert *require.Assertions, L *lua.State) {
 	testStr := "Hello, World!"
 	L.PushString(testStr)
 	var size int
-	result, err := L.OptLString(-1, "default", &size)
-	assert.NoError(err)
+	result := L.OptLString(-1, "default", &size)
 	assert.Equal(testStr, result)
 	assert.Equal(len(testStr), size)
 	L.Pop(1)
 
 	L.PushString("")
-	result, err = L.OptLString(-1, "default", &size)
-	assert.NoError(err)
+	result = L.OptLString(-1, "default", &size)
 	assert.Equal("", result)
 	assert.Equal(0, size)
 	L.Pop(1)
 
 	unicodeStr := "你好世界🌍"
 	L.PushString(unicodeStr)
-	result, err = L.OptLString(-1, "default", &size)
-	assert.NoError(err)
+	result = L.OptLString(-1, "default", &size)
 	assert.Equal(unicodeStr, result)
 	assert.Equal(len(unicodeStr), size)
 	L.Pop(1)
 
 	L.PushNumber(42.5)
-	result, err = L.OptLString(-1, "default", &size)
-	assert.NoError(err)
+	result = L.OptLString(-1, "default", &size)
 	assert.Equal("42.5", result)
 	assert.True(size > 0)
 	L.Pop(1)
 
 	L.PushInteger(123)
-	result, err = L.OptLString(-1, "default", &size)
-	assert.NoError(err)
+	result = L.OptLString(-1, "default", &size)
 	assert.Equal("123", result)
 	assert.Equal(3, size)
 	L.Pop(1)
 
 	L.PushNil()
 	defaultStr := "this is default"
-	result, err = L.OptLString(-1, defaultStr, &size)
-	assert.NoError(err)
+	result = L.OptLString(-1, defaultStr, &size)
 	assert.Equal(defaultStr, result)
 	assert.Equal(len(defaultStr), size)
 	L.Pop(1)
 
 	defaultStr2 := "another default"
-	result, err = L.OptLString(100, defaultStr2, &size)
-	assert.NoError(err)
+	result = L.OptLString(100, defaultStr2, &size)
 	assert.Equal(defaultStr2, result)
 	assert.Equal(len(defaultStr2), size)
 
 	L.PushString("test")
-	result, err = L.OptLString(-1, "default", nil)
-	assert.NoError(err)
+	result = L.OptLString(-1, "default", nil)
 	assert.Equal("test", result)
 	L.Pop(1)
 
 	L.PushNil()
-	result, err = L.OptLString(-1, "", &size)
-	assert.NoError(err)
+	result = L.OptLString(-1, "", &size)
 	assert.Equal("", result)
 	assert.Equal(0, size)
 	L.Pop(1)
 
 	longStr := "This is a very long string that contains many characters and should test the string handling properly in the Lua to Go conversion"
 	L.PushString(longStr)
-	result, err = L.OptLString(-1, "default", &size)
-	assert.NoError(err)
+	result = L.OptLString(-1, "default", &size)
 	assert.Equal(longStr, result)
 	assert.Equal(len(longStr), size)
 	L.Pop(1)

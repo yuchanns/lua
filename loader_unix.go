@@ -5,13 +5,6 @@ package lua
 import (
 	"github.com/ebitengine/purego"
 	"golang.org/x/sys/unix"
-	"sync"
-)
-
-// String cache to avoid repeated allocations for common strings
-var (
-	stringCache = make(map[string]*byte)
-	cacheMutex  sync.RWMutex
 )
 
 func bytePtrFromString(s string) (*byte, error) {
@@ -47,15 +40,4 @@ func freeLibrary(handle uintptr) error {
 		return err
 	}
 	return nil
-}
-
-func getProcAddress(handle uintptr, name string) (uintptr, error) {
-	if handle == 0 {
-		return 0, nil
-	}
-	addr, err := purego.Dlsym(handle, name)
-	if err != nil {
-		return 0, err
-	}
-	return addr, nil
 }

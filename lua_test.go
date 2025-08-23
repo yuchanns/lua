@@ -63,7 +63,7 @@ func (s *Suite) TearDown() {
 	if s.lib == nil {
 		return
 	}
-	s.lib.Close()
+	_ = s.lib.Close()
 }
 
 type funcWithState = func(*Suite, *require.Assertions, *lua.State)

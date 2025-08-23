@@ -260,13 +260,14 @@ func newFFI(path string) (FFI *ffi, err error) {
 			case "gte":
 				if version < targetVersion {
 					register = false
-					break
 				}
 			case "lte":
 				if version > targetVersion {
 					register = false
-					break
 				}
+			}
+			if !register {
+				break
 			}
 		}
 
