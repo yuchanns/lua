@@ -13,6 +13,10 @@ import (
 // See: https://www.lua.org/manual/5.4/manual.html#lua_Reader
 type LuaReader func(L unsafe.Pointer, ud unsafe.Pointer, sz *int) *byte
 
+// LuaWriter represents the Go equivalent of the lua_Writer C callback type for streaming data out of the Lua state.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_Writer
+type LuaWriter func(L unsafe.Pointer, p unsafe.Pointer, sz int, ud unsafe.Pointer) int
+
 // LuaAlloc mirrors the lua_Alloc C function type, used for advanced state memory allocation customization.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_Alloc
 type LuaAlloc func(ud unsafe.Pointer, ptr unsafe.Pointer, osize, nsize int) unsafe.Pointer
@@ -87,6 +91,8 @@ type ffi struct {
 	LuaArith    func(L unsafe.Pointer, op int)                         `ffi:"lua_arith,gte=503"`
 	LuaConcat   func(L unsafe.Pointer, n int)                          `ffi:"lua_concat,gte=503"`
 	LuaLen      func(L unsafe.Pointer, idx int)                        `ffi:"lua_len,gte=503"`
+	LuaStringToNumber func(L unsafe.Pointer, s *byte) int              `ffi:"lua_stringtonumber,gte=503"`
+	LuaError          func(L unsafe.Pointer) int                         `ffi:"lua_error,gte=503"`
 
 	// Push functions
 	LuaPushnil           func(L unsafe.Pointer)                          `ffi:"lua_pushnil,gte=503"`
@@ -138,6 +144,7 @@ type ffi struct {
 	LuaCallk     func(L unsafe.Pointer, nargs, nresults int, ctx unsafe.Pointer, k LuaKFunction)              `ffi:"lua_callk,gte=503"`
 	LuaPcallk    func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx unsafe.Pointer, k LuaKFunction) int `ffi:"lua_pcallk,gte=503"`
 	LuaLoad      func(L unsafe.Pointer, reader LuaReader, dt unsafe.Pointer, chunkname *byte, mode *byte) int `ffi:"lua_load,gte=503"`
+	LuaDump      func(L unsafe.Pointer, writer LuaWriter, data unsafe.Pointer, strip int) int `ffi:"lua_dump,gte=503"`
 
 	LuaSetwarnf func(L unsafe.Pointer, warnf LuaWarnFunction, ud unsafe.Pointer) `ffi:"lua_setwarnf,gte=504"`
 

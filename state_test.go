@@ -657,3 +657,98 @@ assert(mylib.add(1, 2) == 3)
 assert(mylib.addwithupvalue(1, 2) == 13)  -- 1 + 2 + 10 (upvalue)
 	`))
 }
+
+func (s *Suite) TestDump(assert *require.Assertions, L *lua.State) {
+	// Load a simple function
+	err := L.LoadString("function f(x) return x * 2 end; return f")
+	assert.NoError(err)
+
+	// Call to get the function on the stack
+	err = L.PCall(0, 1, 0)
+	assert.NoError(err)
+	assert.True(L.IsFunction(-1))
+
+	// Dump the function to a buffer
+	var buf strings.Builder
+	err = L.Dump(&buf, false) // Don't strip debug info
+	assert.NoError(err)
+
+	// The dumped chunk should not be empty
+	dumpedData := buf.String()
+	assert.NotEmpty(dumpedData)
+	assert.True(len(dumpedData) > 0)
+
+	// Clean up
+	L.Pop(1)
+}
+
+func (s *Suite) TestStringToNumber(assert *require.Assertions, L *lua.State) {
+	resultLen := L.StringToNumber("42")
+	assert.Equal(3, resultLen)
+	assert.True(L.IsNumber(-1))
+	assert.Equal(42.0, L.ToNumber(-1))
+	L.Pop(1)
+
+	resultLen = L.StringToNumber("3.14")
+	assert.Equal(5, resultLen)
+	assert.True(L.IsNumber(-1))
+	assert.Equal(3.14, L.ToNumber(-1))
+	L.Pop(1)
+
+	resultLen = L.StringToNumber("-123.45")
+	assert.Equal(8, resultLen)
+	assert.True(L.IsNumber(-1))
+	assert.Equal(-123.45, L.ToNumber(-1))
+	L.Pop(1)
+
+	resultLen = L.StringToNumber("1.23e2")
+	assert.Equal(7, resultLen)
+	assert.True(L.IsNumber(-1))
+	assert.Equal(123.0, L.ToNumber(-1))
+	L.Pop(1)
+
+	resultLen = L.StringToNumber("123abc")
+	assert.Equal(0, resultLen)
+	if resultLen > 0 {
+		L.Pop(1)
+	}
+
+	resultLen = L.StringToNumber("not_a_number")
+	assert.Equal(0, resultLen)
+	if resultLen > 0 {
+		L.Pop(1)
+	}
+
+	resultLen = L.StringToNumber("")
+	assert.Equal(0, resultLen)
+	if resultLen > 0 {
+		L.Pop(1)
+	}
+
+	resultLen = L.StringToNumber("0xFF")
+	assert.Equal(5, resultLen)
+	assert.True(L.IsNumber(-1))
+	assert.Equal(255.0, L.ToNumber(-1))
+	L.Pop(1)
+
+	testStr := "  42  "
+	resultLen = L.StringToNumber(testStr)
+	assert.Equal(len(testStr)+1, resultLen)
+	assert.True(L.IsNumber(-1))
+	assert.Equal(42.0, L.ToNumber(-1))
+	L.Pop(1)
+}
+
+func (s *Suite) TestError(assert *require.Assertions, L *lua.State) {
+	L.PushString("test error message")
+	
+	assert.Panics(func() {
+		L.Error()
+	})
+	
+	L.PushNumber(42)
+	
+	assert.Panics(func() {
+		L.Error()
+	})
+}

@@ -134,6 +134,12 @@ func (s *State) checkUnprotectedError() error {
 	return &UnprotectedError{message: msg}
 }
 
+// Error raises a Lua error using the value at the top of the stack as the error object.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_error
+func (s *State) Error() int {
+	return s.ffi.LuaError(s.luaL)
+}
+
 // Errorf raises a formatted Lua error from the Go side, pushing the error onto the Lua stack.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_error
 func (s *State) Errorf(format string, args ...any) int {
@@ -192,6 +198,33 @@ func (s *State) Load(r io.Reader, chunkname string, mode ...string) (err error) 
 	// the reader immediately consumes the data from the io.Reader after
 	// the call to LuaLoad. So it will not outlive the io.Reader.
 	err = s.CheckError(s.ffi.LuaLoad(s.luaL, reader, unsafe.Pointer(&r), cname, m))
+	return
+}
+
+// Dump dumps a function as a binary chunk to an io.Writer. If strip is true, debug information is removed.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_dump
+func (s *State) Dump(w io.Writer, strip bool) (err error) {
+	var writer LuaWriter = func(_ unsafe.Pointer, p unsafe.Pointer, sz int, ud unsafe.Pointer) int {
+		writer := *(*io.Writer)(ud)
+		if sz > 0 {
+			data := unsafe.Slice((*byte)(p), sz)
+			_, err := writer.Write(data)
+			if err != nil {
+				return 1 // Error
+			}
+		}
+		return 0 // Success
+	}
+
+	stripInt := 0
+	if strip {
+		stripInt = 1
+	}
+
+	// SAFETY: it is safe to pass the writer as an unsafe.Pointer because
+	// the writer immediately writes the data to the io.Writer after
+	// the call to LuaDump. So it will not outlive the io.Writer.
+	err = s.CheckError(s.ffi.LuaDump(s.luaL, writer, unsafe.Pointer(&w), stripInt))
 	return
 }
 
@@ -361,6 +394,14 @@ func (s *State) SetFuncs(l []*Reg, nup int) {
 	}
 	ll = append(ll, LuaLReg{nil, nil}) // Add a sentinel entry with zero values
 	s.ffi.LuaLSetfuncs(s.luaL, unsafe.Pointer(unsafe.SliceData(ll)), nup)
+}
+
+// StringToNumber converts a string to a Lua number and pushes it onto the stack.
+// Returns the length of the string that was successfully converted.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_stringtonumber
+func (s *State) StringToNumber(str string) int {
+	cstr, _ := bytePtrFromString(str)
+	return s.ffi.LuaStringToNumber(s.luaL, cstr)
 }
 
 // NewLibTable creates a new Lua table on the stack and sets it as the current library table.
