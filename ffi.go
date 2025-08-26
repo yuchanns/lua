@@ -57,7 +57,7 @@ type ffi struct {
 
 	LuaVersion func(L unsafe.Pointer) float64 `ffi:"lua_version,gte=503"`
 
-	LuaGc      func(L unsafe.Pointer, what int, arg int) int `ffi:"lua_gc,gte=503"`
+	LuaGc func(L unsafe.Pointer, what int, arg int) int `ffi:"lua_gc,gte=503"`
 
 	// Basic stack manipulation
 	LuaAbsindex   func(L unsafe.Pointer, idx int) int        `ffi:"lua_absindex,gte=503"`
@@ -88,29 +88,29 @@ type ffi struct {
 	LuaTothread    func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_tothread,gte=503"`
 	LuaTopointer   func(L unsafe.Pointer, idx int) unsafe.Pointer                `ffi:"lua_topointer,gte=503"`
 
-	LuaRawequal func(L unsafe.Pointer, idx1 int, idx2 int) int         `ffi:"lua_rawequal,gte=503"`
-	LuaCompare  func(L unsafe.Pointer, idx1 int, idx2 int, op int) int `ffi:"lua_compare,gte=503"`
-	LuaArith    func(L unsafe.Pointer, op int)                         `ffi:"lua_arith,gte=503"`
-	LuaConcat   func(L unsafe.Pointer, n int)                          `ffi:"lua_concat,gte=503"`
-	LuaLen      func(L unsafe.Pointer, idx int)                        `ffi:"lua_len,gte=503"`
-	LuaStringToNumber func(L unsafe.Pointer, s *byte) int              `ffi:"lua_stringtonumber,gte=503"`
-	LuaError          func(L unsafe.Pointer) int                         `ffi:"lua_error,gte=503"`
+	LuaRawequal       func(L unsafe.Pointer, idx1 int, idx2 int) int         `ffi:"lua_rawequal,gte=503"`
+	LuaCompare        func(L unsafe.Pointer, idx1 int, idx2 int, op int) int `ffi:"lua_compare,gte=503"`
+	LuaArith          func(L unsafe.Pointer, op int)                         `ffi:"lua_arith,gte=503"`
+	LuaConcat         func(L unsafe.Pointer, n int)                          `ffi:"lua_concat,gte=503"`
+	LuaLen            func(L unsafe.Pointer, idx int)                        `ffi:"lua_len,gte=503"`
+	LuaStringToNumber func(L unsafe.Pointer, s *byte) int                    `ffi:"lua_stringtonumber,gte=503"`
+	LuaError          func(L unsafe.Pointer) int                             `ffi:"lua_error,gte=503"`
 
 	LuaGetallocf func(L unsafe.Pointer, ud unsafe.Pointer) unsafe.Pointer `ffi:"lua_getallocf,gte=503"`
-	LuaSetallocf func(L unsafe.Pointer, f LuaAlloc, ud unsafe.Pointer) `ffi:"lua_setallocf,gte=503"`
+	LuaSetallocf func(L unsafe.Pointer, f LuaAlloc, ud unsafe.Pointer)    `ffi:"lua_setallocf,gte=503"`
 
 	// Push functions
-	LuaPushnil           func(L unsafe.Pointer)                          `ffi:"lua_pushnil,gte=503"`
-	LuaPushnumber        func(L unsafe.Pointer, n float64)               `ffi:"lua_pushnumber,gte=503"`
-	LuaPushinteger       func(L unsafe.Pointer, n int64)                 `ffi:"lua_pushinteger,gte=503"`
-	LuaPushlstring       func(L unsafe.Pointer, s *byte, len int) *byte  `ffi:"lua_pushlstring,gte=503"`
-	LuaPushstring        func(L unsafe.Pointer, s *byte) *byte           `ffi:"lua_pushstring,gte=503"`
+	LuaPushnil           func(L unsafe.Pointer)                                       `ffi:"lua_pushnil,gte=503"`
+	LuaPushnumber        func(L unsafe.Pointer, n float64)                            `ffi:"lua_pushnumber,gte=503"`
+	LuaPushinteger       func(L unsafe.Pointer, n int64)                              `ffi:"lua_pushinteger,gte=503"`
+	LuaPushlstring       func(L unsafe.Pointer, s *byte, len int) *byte               `ffi:"lua_pushlstring,gte=503"`
+	LuaPushstring        func(L unsafe.Pointer, s *byte) *byte                        `ffi:"lua_pushstring,gte=503"`
 	LuaPushvfstring      func(L unsafe.Pointer, fmt *byte, argp unsafe.Pointer) *byte `ffi:"lua_pushvfstring,gte=503"`
-	LuaPushgoclosure     func(L unsafe.Pointer, f LuaGoFunction, n int)  `ffi:"lua_pushcclosure,gte=503"`
-	LuaPushcclousure     func(L unsafe.Pointer, f unsafe.Pointer, n int) `ffi:"lua_pushcclosure,gte=503"`
-	LuaPushboolean       func(L unsafe.Pointer, b int) int               `ffi:"lua_pushboolean,gte=503"`
-	LuaPushlightuserdata func(L unsafe.Pointer, p unsafe.Pointer)        `ffi:"lua_pushlightuserdata,gte=503"`
-	LuaPushthread        func(L unsafe.Pointer) int                      `ffi:"lua_pushthread,gte=503"`
+	LuaPushgoclosure     func(L unsafe.Pointer, f LuaGoFunction, n int)               `ffi:"lua_pushcclosure,gte=503"`
+	LuaPushcclousure     func(L unsafe.Pointer, f unsafe.Pointer, n int)              `ffi:"lua_pushcclosure,gte=503"`
+	LuaPushboolean       func(L unsafe.Pointer, b int) int                            `ffi:"lua_pushboolean,gte=503"`
+	LuaPushlightuserdata func(L unsafe.Pointer, p unsafe.Pointer)                     `ffi:"lua_pushlightuserdata,gte=503"`
+	LuaPushthread        func(L unsafe.Pointer) int                                   `ffi:"lua_pushthread,gte=503"`
 
 	// Table and field functions
 	LuaCreatetable func(L unsafe.Pointer, narr, nrec int)         `ffi:"lua_createtable,gte=503"`
@@ -150,7 +150,7 @@ type ffi struct {
 	LuaCallk     func(L unsafe.Pointer, nargs, nresults int, ctx unsafe.Pointer, k LuaKFunction)              `ffi:"lua_callk,gte=503"`
 	LuaPcallk    func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx unsafe.Pointer, k LuaKFunction) int `ffi:"lua_pcallk,gte=503"`
 	LuaLoad      func(L unsafe.Pointer, reader LuaReader, dt unsafe.Pointer, chunkname *byte, mode *byte) int `ffi:"lua_load,gte=503"`
-	LuaDump      func(L unsafe.Pointer, writer LuaWriter, data unsafe.Pointer, strip int) int `ffi:"lua_dump,gte=503"`
+	LuaDump      func(L unsafe.Pointer, writer LuaWriter, data unsafe.Pointer, strip int) int                 `ffi:"lua_dump,gte=503"`
 
 	LuaSetwarnf func(L unsafe.Pointer, warnf LuaWarnFunction, ud unsafe.Pointer) `ffi:"lua_setwarnf,gte=504"`
 

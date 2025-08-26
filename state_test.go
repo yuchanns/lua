@@ -795,3 +795,37 @@ func (s *Suite) TestSetAllocf(assert *require.Assertions, L *lua.State) {
 	assert.NotNil(alloc)
 	assert.Nil(ud)
 }
+
+func (s *Suite) TestToLStringAux(assert *require.Assertions, L *lua.State) {
+	L.PushInteger(123)
+	result := L.ToLStringAux(-1, nil)
+	assert.Equal("123", result)
+	L.Pop(1)
+
+	L.PushString("hello")
+	var size int
+	result = L.ToLStringAux(-1, &size)
+	assert.Equal("hello", result)
+	assert.Equal(5, size)
+	L.Pop(1)
+
+	L.PushBoolean(true)
+	result = L.ToLStringAux(-1, nil)
+	assert.Equal("true", result)
+	L.Pop(1)
+
+	L.PushBoolean(false)
+	result = L.ToLStringAux(-1, nil)
+	assert.Equal("false", result)
+	L.Pop(1)
+
+	L.PushNil()
+	result = L.ToLStringAux(-1, nil)
+	assert.Equal("nil", result)
+	L.Pop(1)
+
+	L.NewTable()
+	result = L.ToLStringAux(-1, nil)
+	assert.Contains(result, "table:")
+	L.Pop(1)
+}

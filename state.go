@@ -425,6 +425,21 @@ func (s *State) StringToNumber(str string) int {
 	return s.ffi.LuaStringToNumber(s.luaL, cstr)
 }
 
+// ToLStringAux converts the Lua value at the given index to a string with explicit length.
+// This is the auxiliary library version that handles metatable __tostring calls.
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_tolstring
+func (s *State) ToLStringAux(idx int, size *int) string {
+	var sz unsafe.Pointer
+	if size != nil {
+		sz = unsafe.Pointer(size)
+	}
+	strPtr := s.ffi.LuaLTolstring(s.luaL, idx, sz)
+	if strPtr == nil {
+		return ""
+	}
+	return bytePtrToString(strPtr)
+}
+
 // NewLibTable creates a new Lua table on the stack and sets it as the current library table.
 // A null Reg will be added as a sentinel to mark the end of the list inside the method
 // so callers do not need to add it manually.
