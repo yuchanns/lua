@@ -105,6 +105,12 @@ func (s *State) Version() float64 {
 	return s.ffi.version
 }
 
+// GC performs garbage collection operations on the Lua state.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_gc
+func (s *State) GC(what int, arg int) int {
+	return s.ffi.LuaGc(s.luaL, what, arg)
+}
+
 // CheckError transforms a Lua C API error code into a Go error,
 // automatically extracting the human-readable message from the stack if needed.
 func (s *State) CheckError(status int) error {

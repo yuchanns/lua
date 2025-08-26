@@ -752,3 +752,14 @@ func (s *Suite) TestError(assert *require.Assertions, L *lua.State) {
 		L.Error()
 	})
 }
+
+func (s *Suite) TestGC(assert *require.Assertions, L *lua.State) {
+	result := L.GC(3, 0)
+	assert.True(result >= 0)
+
+	result = L.GC(4, 0)
+	assert.True(result >= 0)
+
+	result = L.GC(9, 0)
+	assert.True(result == 0 || result == 1)
+}
