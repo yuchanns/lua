@@ -111,6 +111,21 @@ func (s *State) GC(what int, arg int) int {
 	return s.ffi.LuaGc(s.luaL, what, arg)
 }
 
+// GetAllocf returns the current memory allocator function and its user data for this Lua state.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_getallocf
+func (s *State) GetAllocf() (alloc LuaAlloc, ud unsafe.Pointer) {
+	var userData unsafe.Pointer
+	allocPtr := s.ffi.LuaGetallocf(s.luaL, unsafe.Pointer(&userData))
+	alloc = *(*LuaAlloc)(unsafe.Pointer(&allocPtr))
+	return alloc, userData
+}
+
+// SetAllocf sets the memory allocator function and user data for this Lua state.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_setallocf
+func (s *State) SetAllocf(f LuaAlloc, ud unsafe.Pointer) {
+	s.ffi.LuaSetallocf(s.luaL, f, ud)
+}
+
 // CheckError transforms a Lua C API error code into a Go error,
 // automatically extracting the human-readable message from the stack if needed.
 func (s *State) CheckError(status int) error {

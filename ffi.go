@@ -96,6 +96,9 @@ type ffi struct {
 	LuaStringToNumber func(L unsafe.Pointer, s *byte) int              `ffi:"lua_stringtonumber,gte=503"`
 	LuaError          func(L unsafe.Pointer) int                         `ffi:"lua_error,gte=503"`
 
+	LuaGetallocf func(L unsafe.Pointer, ud unsafe.Pointer) unsafe.Pointer `ffi:"lua_getallocf,gte=503"`
+	LuaSetallocf func(L unsafe.Pointer, f LuaAlloc, ud unsafe.Pointer) `ffi:"lua_setallocf,gte=503"`
+
 	// Push functions
 	LuaPushnil           func(L unsafe.Pointer)                          `ffi:"lua_pushnil,gte=503"`
 	LuaPushnumber        func(L unsafe.Pointer, n float64)               `ffi:"lua_pushnumber,gte=503"`

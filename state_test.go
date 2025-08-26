@@ -745,9 +745,9 @@ func (s *Suite) TestError(assert *require.Assertions, L *lua.State) {
 	assert.Panics(func() {
 		L.Error()
 	})
-	
+
 	L.PushNumber(42)
-	
+
 	assert.Panics(func() {
 		L.Error()
 	})
@@ -762,4 +762,36 @@ func (s *Suite) TestGC(assert *require.Assertions, L *lua.State) {
 
 	result = L.GC(9, 0)
 	assert.True(result == 0 || result == 1)
+}
+
+func (s *Suite) TestAbsIndex(assert *require.Assertions, L *lua.State) {
+	L.PushNumber(42)
+	L.PushString("test")
+	L.PushBoolean(true)
+
+	assert.Equal(1, L.AbsIndex(1))
+	assert.Equal(2, L.AbsIndex(2))
+	assert.Equal(3, L.AbsIndex(3))
+	assert.Equal(3, L.AbsIndex(-1))
+	assert.Equal(2, L.AbsIndex(-2))
+	assert.Equal(1, L.AbsIndex(-3))
+
+	L.Pop(3)
+}
+
+func (s *Suite) TestGetAllocf(assert *require.Assertions, L *lua.State) {
+	alloc, ud := L.GetAllocf()
+	assert.NotNil(alloc)
+	assert.Nil(ud)
+}
+
+func (s *Suite) TestSetAllocf(assert *require.Assertions, L *lua.State) {
+	var userData unsafe.Pointer
+	L.SetAllocf(func(ud unsafe.Pointer, ptr unsafe.Pointer, osize, nsize int) unsafe.Pointer {
+		return nil
+	}, userData)
+	
+	alloc, ud := L.GetAllocf()
+	assert.NotNil(alloc)
+	assert.Nil(ud)
 }
