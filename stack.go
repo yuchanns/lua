@@ -76,6 +76,13 @@ func (s *State) CheckStack(sz int) bool {
 	return s.ffi.LuaCheckstack(s.luaL, sz) != 0
 }
 
+// CheckStackMsg ensures there is space for at least sz more elements on the stack, raising an error with message if not.
+// See: https://www.lua.org/manual/5.4/manual.html#luaL_checkstack
+func (s *State) CheckStackMsg(sz int, msg string) {
+	m, _ := bytePtrFromString(msg)
+	s.ffi.LuaLCheckstack(s.luaL, sz, m)
+}
+
 // XMove moves n values between stacks of different Lua states.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_xmove
 func (s *State) XMove(to *State, n int) {

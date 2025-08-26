@@ -100,6 +100,17 @@ func (s *Suite) TestStackCheckStack(assert *require.Assertions, L *lua.State) {
 	assert.True(L.CheckStack(100))
 }
 
+func (s *Suite) TestStackCheckStackMsg(assert *require.Assertions, L *lua.State) {
+	L.CheckStackMsg(10, "test message")
+	L.CheckStackMsg(100, "")
+
+	for i := range 100 {
+		L.PushInteger(int64(i))
+	}
+
+	L.CheckStackMsg(10, "with stack items")
+}
+
 func (s *Suite) TestStackPop(assert *require.Assertions, L *lua.State) {
 
 	L.PushInteger(1)

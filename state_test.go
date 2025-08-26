@@ -790,7 +790,7 @@ func (s *Suite) TestSetAllocf(assert *require.Assertions, L *lua.State) {
 	L.SetAllocf(func(ud unsafe.Pointer, ptr unsafe.Pointer, osize, nsize int) unsafe.Pointer {
 		return nil
 	}, userData)
-	
+
 	alloc, ud := L.GetAllocf()
 	assert.NotNil(alloc)
 	assert.Nil(ud)
