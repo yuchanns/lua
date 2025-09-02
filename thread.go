@@ -1,6 +1,10 @@
 package lua
 
-import "unsafe"
+import (
+	"unsafe"
+
+	"github.com/ebitengine/purego"
+)
 
 // NewThread creates a new Lua thread (coroutine), pushes it onto the stack, and returns its State.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_newthread
@@ -55,7 +59,7 @@ func (s *State) YieldK(nresults int, ctx unsafe.Pointer, k KFunc) (err error) {
 		}()
 	}
 
-	status := s.ffi.LuaYieldk(s.luaL, nresults, ctx, func(L unsafe.Pointer, status int, ctx unsafe.Pointer) int {
+	status := s.ffi.LuaYieldk(s.luaL, nresults, ctx, purego.NewCallback(func(L unsafe.Pointer, status int, ctx unsafe.Pointer) int {
 		if s.unwindingProtection {
 			// Use panic instead of setjmp/longjmp to avoid issues with syscall frames
 			defer panic(protectionMsg)
@@ -63,7 +67,7 @@ func (s *State) YieldK(nresults int, ctx unsafe.Pointer, k KFunc) (err error) {
 
 		state := s.Clone(L)
 		return k(state, status, ctx)
-	})
+	}))
 	if status != LUA_OK && status != LUA_YIELD {
 		err = s.CheckError(status)
 	}

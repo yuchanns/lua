@@ -13,21 +13,9 @@ import (
 // See: https://www.lua.org/manual/5.4/manual.html#lua_Reader
 type LuaReader func(L unsafe.Pointer, ud unsafe.Pointer, sz *int) *byte
 
-// LuaAlloc mirrors the lua_Alloc C function type, used for advanced state memory allocation customization.
-// See: https://www.lua.org/manual/5.4/manual.html#lua_Alloc
-type LuaAlloc func(ud unsafe.Pointer, ptr unsafe.Pointer, osize, nsize int) unsafe.Pointer
-
-// LuaGoFunction is the Go equivalent of the C lua_CFunction for stack-based callbacks.
-// See: https://www.lua.org/manual/5.4/manual.html#lua_CFunction
-type LuaGoFunction func(L unsafe.Pointer) int
-
 // LuaKFunction is the Go equivalent for lua_KFunction, supporting continuation-style yields from C to Lua.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_KFunction
 type LuaKFunction func(L unsafe.Pointer, status int, ctx unsafe.Pointer) int
-
-// LuaWarnFunction is a Go representation of the Lua C API lua_WarnFunction for error and warning hooks.
-// See: https://www.lua.org/manual/5.4/manual.html#lua_WarnFunction
-type LuaWarnFunction func(ud unsafe.Pointer, msg *byte, tocont int)
 
 type LuaLReg struct {
 	Name *byte
@@ -43,13 +31,13 @@ type ffi struct {
 	version float64
 
 	// State manipulation
-	LuaNewstate    func(f LuaAlloc, ud unsafe.Pointer) unsafe.Pointer `ffi:"lua_newstate,gte=503"`
-	LuaClose       func(L unsafe.Pointer)                             `ffi:"lua_close"`
-	LuaNewthread   func(L unsafe.Pointer) unsafe.Pointer              `ffi:"lua_newthread,gte=503"`
-	LuaClosethread func(L unsafe.Pointer, from unsafe.Pointer) int    `ffi:"lua_closethread,gte=504"`
-	LuaResetthread func(L unsafe.Pointer) int                         `ffi:"lua_resetthread,gte=504"`
+	LuaNewstate    func(f uintptr, ud unsafe.Pointer) unsafe.Pointer `ffi:"lua_newstate,gte=503"`
+	LuaClose       func(L unsafe.Pointer)                            `ffi:"lua_close"`
+	LuaNewthread   func(L unsafe.Pointer) unsafe.Pointer             `ffi:"lua_newthread,gte=503"`
+	LuaClosethread func(L unsafe.Pointer, from unsafe.Pointer) int   `ffi:"lua_closethread,gte=504"`
+	LuaResetthread func(L unsafe.Pointer) int                        `ffi:"lua_resetthread,gte=504"`
 
-	LuaAtpanic func(L unsafe.Pointer, panicf LuaGoFunction) unsafe.Pointer `ffi:"lua_atpanic,gte=503"`
+	LuaAtpanic func(L unsafe.Pointer, panicf uintptr) unsafe.Pointer `ffi:"lua_atpanic,gte=503"`
 
 	LuaVersion func(L unsafe.Pointer) float64 `ffi:"lua_version,gte=503"`
 
@@ -94,7 +82,7 @@ type ffi struct {
 	LuaPushinteger       func(L unsafe.Pointer, n int64)                 `ffi:"lua_pushinteger,gte=503"`
 	LuaPushlstring       func(L unsafe.Pointer, s *byte, len int) *byte  `ffi:"lua_pushlstring,gte=503"`
 	LuaPushstring        func(L unsafe.Pointer, s *byte) *byte           `ffi:"lua_pushstring,gte=503"`
-	LuaPushgoclosure     func(L unsafe.Pointer, f LuaGoFunction, n int)  `ffi:"lua_pushcclosure,gte=503"`
+	LuaPushgoclosure     func(L unsafe.Pointer, f uintptr, n int)        `ffi:"lua_pushcclosure,gte=503"`
 	LuaPushcclousure     func(L unsafe.Pointer, f unsafe.Pointer, n int) `ffi:"lua_pushcclosure,gte=503"`
 	LuaPushboolean       func(L unsafe.Pointer, b int) int               `ffi:"lua_pushboolean,gte=503"`
 	LuaPushlightuserdata func(L unsafe.Pointer, p unsafe.Pointer)        `ffi:"lua_pushlightuserdata,gte=503"`
@@ -133,16 +121,16 @@ type ffi struct {
 	LuaLCheckudata   func(L unsafe.Pointer, ud int, tname *byte) unsafe.Pointer `ffi:"luaL_checkudata,gte=503"`
 	LuaLTestudata    func(L unsafe.Pointer, ud int, tname *byte) unsafe.Pointer `ffi:"luaL_testudata,gte=503"`
 
-	LuaGetglobal func(L unsafe.Pointer, name *byte) int32                                                     `ffi:"lua_getglobal,gte=503"`
-	LuaSetglobal func(L unsafe.Pointer, name *byte)                                                           `ffi:"lua_setglobal,gte=503"`
-	LuaCallk     func(L unsafe.Pointer, nargs, nresults int, ctx unsafe.Pointer, k LuaKFunction)              `ffi:"lua_callk,gte=503"`
-	LuaPcallk    func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx unsafe.Pointer, k LuaKFunction) int `ffi:"lua_pcallk,gte=503"`
-	LuaLoad      func(L unsafe.Pointer, reader LuaReader, dt unsafe.Pointer, chunkname *byte, mode *byte) int `ffi:"lua_load,gte=503"`
+	LuaGetglobal func(L unsafe.Pointer, name *byte) int32                                                   `ffi:"lua_getglobal,gte=503"`
+	LuaSetglobal func(L unsafe.Pointer, name *byte)                                                         `ffi:"lua_setglobal,gte=503"`
+	LuaCallk     func(L unsafe.Pointer, nargs, nresults int, ctx unsafe.Pointer, k uintptr)                 `ffi:"lua_callk,gte=503"`
+	LuaPcallk    func(L unsafe.Pointer, nargs, nresults, errfunc int, ctx unsafe.Pointer, k uintptr) int    `ffi:"lua_pcallk,gte=503"`
+	LuaLoad      func(L unsafe.Pointer, reader uintptr, dt unsafe.Pointer, chunkname *byte, mode *byte) int `ffi:"lua_load,gte=503"`
 
-	LuaSetwarnf func(L unsafe.Pointer, warnf LuaWarnFunction, ud unsafe.Pointer) `ffi:"lua_setwarnf,gte=504"`
+	LuaSetwarnf func(L unsafe.Pointer, warnf uintptr, ud unsafe.Pointer) `ffi:"lua_setwarnf,gte=504"`
 
 	// Coroutine functions
-	LuaYieldk      func(L unsafe.Pointer, nresults int, ctx unsafe.Pointer, k LuaKFunction) int   `ffi:"lua_yieldk,gte=503"`
+	LuaYieldk      func(L unsafe.Pointer, nresults int, ctx unsafe.Pointer, k uintptr) int        `ffi:"lua_yieldk,gte=503"`
 	LuaResume      func(L unsafe.Pointer, from unsafe.Pointer, narg int, nres unsafe.Pointer) int `ffi:"lua_resume,gte=504"`
 	LuaResume503   func(L unsafe.Pointer, from unsafe.Pointer, narg int) int                      `ffi:"lua_resume,gte=503,lte=503"`
 	LuaStatus      func(L unsafe.Pointer) int                                                     `ffi:"lua_status,gte=503"`
@@ -178,9 +166,9 @@ type ffi struct {
 
 	LuaLTraceback func(L unsafe.Pointer, L1 unsafe.Pointer, msg *byte, level int) int `ffi:"luaL_traceback,gte=503"`
 
-	LuaLRef      func(L unsafe.Pointer, idx int) int                                 `ffi:"luaL_ref,gte=503"`
-	LuaLUnref    func(L unsafe.Pointer, idx int, ref int)                            `ffi:"luaL_unref,gte=503"`
-	LuaLRequiref func(L unsafe.Pointer, modname *byte, openf LuaGoFunction, glb int) `ffi:"luaL_requiref,gte=503"`
+	LuaLRef      func(L unsafe.Pointer, idx int) int                           `ffi:"luaL_ref,gte=503"`
+	LuaLUnref    func(L unsafe.Pointer, idx int, ref int)                      `ffi:"luaL_unref,gte=503"`
+	LuaLRequiref func(L unsafe.Pointer, modname *byte, openf uintptr, glb int) `ffi:"luaL_requiref,gte=503"`
 }
 
 // Lib returns the underlying dynamic library handle for this ffi instance.

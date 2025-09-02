@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"io"
 	"unsafe"
+
+	"github.com/ebitengine/purego"
 )
 
 type stateOpt struct {
-	alloc    LuaAlloc
+	alloc    uintptr
 	userData unsafe.Pointer
 
 	withoutUwindingProtection bool
@@ -31,7 +33,7 @@ type State struct {
 func newState(ffi *ffi, o *stateOpt) (L *State) {
 	var luaL unsafe.Pointer
 	var refAlloc unsafe.Pointer
-	if o.userData != nil && o.alloc != nil {
+	if o.userData != nil && o.alloc != 0 {
 		refAlloc = o.userData
 		luaL = ffi.LuaNewstate(o.alloc, o.userData)
 	} else {
@@ -92,10 +94,10 @@ type GoFunc func(L *State) int
 // AtPanic sets a Go function as the Lua panic handler for this state, returning pointer of the old panic handler.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_atpanic
 func (s *State) AtPanic(fn GoFunc) (old unsafe.Pointer) {
-	panicf := func(L unsafe.Pointer) int {
+	panicf := purego.NewCallback(func(L unsafe.Pointer) int {
 		state := s.Clone(L)
 		return fn(state)
-	}
+	})
 	return s.ffi.LuaAtpanic(s.luaL, panicf)
 }
 
@@ -191,7 +193,7 @@ func (s *State) Load(r io.Reader, chunkname string, mode ...string) (err error) 
 	// SAFETY: it is safe to pass the reader as an unsafe.Pointer because
 	// the reader immediately consumes the data from the io.Reader after
 	// the call to LuaLoad. So it will not outlive the io.Reader.
-	err = s.CheckError(s.ffi.LuaLoad(s.luaL, reader, unsafe.Pointer(&r), cname, m))
+	err = s.CheckError(s.ffi.LuaLoad(s.luaL, purego.NewCallback(reader), unsafe.Pointer(&r), cname, m))
 	return
 }
 
@@ -272,7 +274,7 @@ func (s *State) PCall(nargs, nresults, errfunc int) (err error) {
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pcallk
 func (s *State) PCallK(nargs, nresults, errfunc int, ctx unsafe.Pointer, k LuaKFunction) (err error) {
 	if !s.unwindingProtection {
-		return s.CheckError(s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, k))
+		return s.CheckError(s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, purego.NewCallback(k)))
 	}
 	defer func() {
 		if r := recover(); r != nil {
@@ -294,7 +296,7 @@ func (s *State) Call(nargs, nresults int) {
 
 // CallK calls a Lua function with the given continuation and context, supporting advanced coroutine control.
 func (s *State) CallK(nargs, nresults int, ctx unsafe.Pointer, k LuaKFunction) {
-	s.ffi.LuaCallk(s.luaL, nargs, nresults, ctx, k)
+	s.ffi.LuaCallk(s.luaL, nargs, nresults, ctx, purego.NewCallback(k))
 }
 
 type WarnFunc func(L *State, msg string, tocont int)
@@ -302,10 +304,10 @@ type WarnFunc func(L *State, msg string, tocont int)
 // SetWarnf sets a Go warning callback for this Lua state, called on warnings/errors from the Lua VM.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setwarnf
 func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
-	s.ffi.LuaSetwarnf(s.luaL, func(ud unsafe.Pointer, msg *byte, tocont int) {
+	s.ffi.LuaSetwarnf(s.luaL, purego.NewCallback(func(ud unsafe.Pointer, msg *byte, tocont int) {
 		state := s.Clone(ud)
 		fn(state, bytePtrToString(msg), tocont)
-	}, ud)
+	}), ud)
 }
 
 var NoOpKFunction LuaKFunction = func(_ unsafe.Pointer, _ int, _ unsafe.Pointer) int {
@@ -323,10 +325,10 @@ func (s *State) Requiref(modname string, openf GoFunc, global bool) {
 	if global {
 		glb = 1
 	}
-	s.ffi.LuaLRequiref(s.luaL, mname, func(L unsafe.Pointer) int {
+	s.ffi.LuaLRequiref(s.luaL, mname, purego.NewCallback(func(L unsafe.Pointer) int {
 		state := s.Clone(L)
 		return openf(state)
-	}, glb)
+	}), glb)
 }
 
 // Ref creates a reference to the value at the given stack index, returning a unique reference ID.
