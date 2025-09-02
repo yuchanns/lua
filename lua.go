@@ -58,6 +58,11 @@ func (l *Lib) NewState(o ...stateOptFunc) (state *State, err error) {
 	return
 }
 
+// FFI returns the underlying ffi instance for advanced usage.
+func (l *Lib) FFI() *ffi {
+	return l.ffi
+}
+
 // stateOptFunc is an option setter for customizing State creation (internal use).
 type stateOptFunc func(o *stateOpt)
 
