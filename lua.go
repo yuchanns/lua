@@ -3,6 +3,8 @@ package lua
 import (
 	"fmt"
 	"unsafe"
+
+	"github.com/ebitengine/purego"
 )
 
 // Lib represents a loaded Lua 5.4 dynamic library binding in Go. It provides access to library-level operations and state creation (see: https://www.lua.org/manual/5.4/manual.html#4.3).
@@ -67,10 +69,10 @@ func WithAlloc[T any](
 	ud *T,
 ) stateOptFunc {
 	return func(o *stateOpt) {
-		o.alloc = func(ud, ptr unsafe.Pointer, osize, nsize int) unsafe.Pointer {
+		o.alloc = purego.NewCallback(func(ud, ptr unsafe.Pointer, osize, nsize int) unsafe.Pointer {
 			t := (*T)(ud)
 			return fn(t, ptr, osize, nsize)
-		}
+		})
 		o.userData = unsafe.Pointer(ud)
 	}
 }

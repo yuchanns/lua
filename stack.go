@@ -2,6 +2,8 @@ package lua
 
 import (
 	"unsafe"
+
+	"github.com/ebitengine/purego"
 )
 
 // RawEqual reports whether the values at the given indices are primitively equal (using Lua's raw equality).
@@ -142,10 +144,10 @@ func (s *State) PushString(sv string) (ret *byte) {
 // Caution: upvalues are read from the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushcclosure
 func (s *State) PushGoClousure(f GoFunc, n int) {
-	s.ffi.LuaPushgoclosure(s.luaL, func(L unsafe.Pointer) int {
+	s.ffi.LuaPushgoclosure(s.luaL, purego.NewCallback(func(L unsafe.Pointer) int {
 		state := s.Clone(L)
 		return f(state)
-	}, n)
+	}), n)
 }
 
 // GetUpValue retrieves the name of the n-th upvalue of a function at funcindex.
