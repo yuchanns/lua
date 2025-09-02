@@ -27,6 +27,14 @@ func New(path string) (lib *Lib, err error) {
 	return
 }
 
+// NewFFI creates a Lib instance from an existing ffi instance.
+// Useful for advanced scenarios such as multi-threading lua programs.
+func NewWithFFI(ffi *ffi) *Lib {
+	return &Lib{
+		ffi: ffi,
+	}
+}
+
 // Close releases the loaded Lua dynamic library and any resources associated with it in this Lib instance.
 func (l *Lib) Close() (err error) {
 	if l.ffi == nil {
