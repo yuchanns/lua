@@ -92,6 +92,8 @@ func (s *State) Close() {
 type GoFunc func(L *State) int
 
 // AtPanic sets a Go function as the Lua panic handler for this state, returning pointer of the old panic handler.
+// Due to the limitation of Purego, only a limited number of callbacks may be created in a single Go
+// process, and any memory allocated for these callbacks is never released.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_atpanic
 func (s *State) AtPanic(fn GoFunc) (old unsafe.Pointer) {
 	panicf := purego.NewCallback(func(L unsafe.Pointer) int {
@@ -164,6 +166,23 @@ func (s *State) GetGlobal(name string) {
 	s.ffi.LuaGetglobal(s.luaL, n)
 }
 
+var reader = purego.NewCallback(func(_ unsafe.Pointer, ud unsafe.Pointer, sz *int) *byte {
+	buf := make([]byte, 4096)
+	reader := *(*io.Reader)(ud)
+	n, err := reader.Read(buf)
+	if err != nil {
+		if err == io.EOF {
+			return nil
+		}
+		return nil
+	}
+	if n == 0 {
+		return nil
+	}
+	*sz = n
+	return &buf[0]
+})
+
 // Load loads a Lua chunk from an io.Reader, compiling but not executing the code. This mirrors lua_load.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_load
 func (s *State) Load(r io.Reader, chunkname string, mode ...string) (err error) {
@@ -173,27 +192,10 @@ func (s *State) Load(r io.Reader, chunkname string, mode ...string) (err error) 
 		m, _ = bytePtrFromString(mode[0])
 	}
 
-	buf := make([]byte, 4096)
-	var reader LuaReader = func(_ unsafe.Pointer, ud unsafe.Pointer, sz *int) *byte {
-		reader := *(*io.Reader)(ud)
-		n, err := reader.Read(buf)
-		if err != nil {
-			if err == io.EOF {
-				return nil
-			}
-			return nil
-		}
-		if n == 0 {
-			return nil
-		}
-		*sz = n
-		return &buf[0]
-	}
-
 	// SAFETY: it is safe to pass the reader as an unsafe.Pointer because
 	// the reader immediately consumes the data from the io.Reader after
 	// the call to LuaLoad. So it will not outlive the io.Reader.
-	err = s.CheckError(s.ffi.LuaLoad(s.luaL, purego.NewCallback(reader), unsafe.Pointer(&r), cname, m))
+	err = s.CheckError(s.ffi.LuaLoad(s.luaL, reader, unsafe.Pointer(&r), cname, m))
 	return
 }
 
@@ -267,14 +269,20 @@ func (s *State) LoadFile(filename string) (err error) {
 // PCall calls a Lua function in protected mode, with argument and result counts. If errors occur, they are returned.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pcall
 func (s *State) PCall(nargs, nresults, errfunc int) (err error) {
-	return s.PCallK(nargs, nresults, errfunc, nil, NoOpKFunction)
+	return s.PCallK(nargs, nresults, errfunc, nil, nil)
 }
 
 // PCallK is like PCall but with full support for Lua continuation functions and execution contexts. Used for advanced coroutine yield/resume situations.
+// Due to the limitation of Purego, only a limited number of callbacks may be created in a single Go
+// process, and any memory allocated for these callbacks is never released.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pcallk
 func (s *State) PCallK(nargs, nresults, errfunc int, ctx unsafe.Pointer, k LuaKFunction) (err error) {
+	var kb uintptr
+	if k != nil {
+		kb = purego.NewCallback(k)
+	}
 	if !s.unwindingProtection {
-		return s.CheckError(s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, purego.NewCallback(k)))
+		return s.CheckError(s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, kb))
 	}
 	defer func() {
 		if r := recover(); r != nil {
@@ -291,17 +299,26 @@ func (s *State) PCallK(nargs, nresults, errfunc int, ctx unsafe.Pointer, k LuaKF
 // Call invokes a Lua function (not in protected mode) with given arg and result counts. Panics on error.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_call
 func (s *State) Call(nargs, nresults int) {
-	s.CallK(nargs, nresults, nil, NoOpKFunction)
+	s.CallK(nargs, nresults, nil, nil)
 }
 
 // CallK calls a Lua function with the given continuation and context, supporting advanced coroutine control.
+// Due to the limitation of Purego, only a limited number of callbacks may be created in a single Go
+// process, and any memory allocated for these callbacks is never released.
+// See: https://www.lua.org/manual/5.4/manual.html#lua_callk
 func (s *State) CallK(nargs, nresults int, ctx unsafe.Pointer, k LuaKFunction) {
-	s.ffi.LuaCallk(s.luaL, nargs, nresults, ctx, purego.NewCallback(k))
+	var kb uintptr
+	if k != nil {
+		kb = purego.NewCallback(k)
+	}
+	s.ffi.LuaCallk(s.luaL, nargs, nresults, ctx, kb)
 }
 
 type WarnFunc func(L *State, msg string, tocont int)
 
 // SetWarnf sets a Go warning callback for this Lua state, called on warnings/errors from the Lua VM.
+// Due to the limitation of Purego, only a limited number of callbacks may be created in a single Go
+// process, and any memory allocated for these callbacks is never released.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setwarnf
 func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 	s.ffi.LuaSetwarnf(s.luaL, purego.NewCallback(func(ud unsafe.Pointer, msg *byte, tocont int) {
@@ -310,15 +327,9 @@ func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 	}), ud)
 }
 
-var NoOpKFunction LuaKFunction = func(_ unsafe.Pointer, _ int, _ unsafe.Pointer) int {
-	return 0
-}
-
-var NoOpKFunc KFunc = func(_ *State, _ int, _ unsafe.Pointer) int {
-	return 0
-}
-
 // Requiref loads a Lua module by name, calling the provided Go function to open it.
+// Due to the limitation of Purego, only a limited number of callbacks may be created in a single Go
+// process, and any memory allocated for these callbacks is never released.
 func (s *State) Requiref(modname string, openf GoFunc, global bool) {
 	mname, _ := bytePtrFromString(modname)
 	var glb int

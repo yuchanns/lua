@@ -46,6 +46,8 @@ func (s *State) PushThread() (isMain bool) {
 type KFunc func(*State, int, unsafe.Pointer) int
 
 // YieldK yields nresults values from the current coroutine, using continuation k and context ctx for resumption.
+// Due to the limitation of Purego, only a limited number of callbacks may be created in a single Go
+// process, and any memory allocated for these callbacks is never released.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_yieldk
 func (s *State) YieldK(nresults int, ctx unsafe.Pointer, k KFunc) (err error) {
 	protectionMsg := "unwinding protection"
@@ -59,15 +61,20 @@ func (s *State) YieldK(nresults int, ctx unsafe.Pointer, k KFunc) (err error) {
 		}()
 	}
 
-	status := s.ffi.LuaYieldk(s.luaL, nresults, ctx, purego.NewCallback(func(L unsafe.Pointer, status int, ctx unsafe.Pointer) int {
-		if s.unwindingProtection {
-			// Use panic instead of setjmp/longjmp to avoid issues with syscall frames
-			defer panic(protectionMsg)
-		}
+	var kb uintptr
+	if k != nil {
+		kb = purego.NewCallback(func(L unsafe.Pointer, status int, ctx unsafe.Pointer) int {
+			if s.unwindingProtection {
+				// Use panic instead of setjmp/longjmp to avoid issues with syscall frames
+				defer panic(protectionMsg)
+			}
 
-		state := s.Clone(L)
-		return k(state, status, ctx)
-	}))
+			state := s.Clone(L)
+			return k(state, status, ctx)
+		})
+	}
+
+	status := s.ffi.LuaYieldk(s.luaL, nresults, ctx, kb)
 	if status != LUA_OK && status != LUA_YIELD {
 		err = s.CheckError(status)
 	}
@@ -77,7 +84,7 @@ func (s *State) YieldK(nresults int, ctx unsafe.Pointer, k KFunc) (err error) {
 // Yield yields nresults values from the current coroutine (no continuation function).
 // See: https://www.lua.org/manual/5.4/manual.html#lua_yield
 func (s *State) Yield(nresults int) (err error) {
-	return s.YieldK(nresults, nil, NoOpKFunc)
+	return s.YieldK(nresults, nil, nil)
 }
 
 // Resume resumes the given Lua thread, passing narg arguments, and returns possible error and
