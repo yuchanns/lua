@@ -75,6 +75,8 @@ func (l *Lib) FFI() *ffi {
 type stateOptFunc func(o *stateOpt)
 
 // WithAlloc sets a custom memory allocation function for the Lua state.
+// Due to the limitation of Purego, only a limited number of callbacks may be created in a single Go
+// process, and any memory allocated for these callbacks is never released.
 // SAFETY: It is guaranteed that the user data pointer will be valid
 // during the lifetime of the Lua state.
 func WithAlloc[T any](

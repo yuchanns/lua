@@ -142,6 +142,8 @@ func (s *State) PushString(sv string) (ret *byte) {
 
 // PushGoClousure pushes a Go function as a Lua C closure with n upvalues onto the stack.
 // Caution: upvalues are read from the stack.
+// Due to the limitation of Purego, only a limited number of callbacks may be created in a single Go
+// process, and any memory allocated for these callbacks is never released.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushcclosure
 func (s *State) PushGoClousure(f GoFunc, n int) {
 	s.ffi.LuaPushgoclosure(s.luaL, purego.NewCallback(func(L unsafe.Pointer) int {
@@ -194,6 +196,8 @@ func (s *State) PushLightUserData(ud any) {
 // PushGoFunction pushes a Go CFunc as a Lua C function with no upvalues.
 // A Go function is not convertible once pushed onto the stack.
 // Use `ToCFunction` to get the C function pointer which wraps the Go function.
+// Due to the limitation of Purego, only a limited number of callbacks may be created in a single Go
+// process, and any memory allocated for these callbacks is never released.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushcfunction
 func (s *State) PushGoFunction(f GoFunc) {
 	s.PushGoClousure(f, 0)
