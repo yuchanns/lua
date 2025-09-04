@@ -61,11 +61,6 @@ func newState(ffi *ffi, o *stateOpt) (L *State) {
 	return L
 }
 
-// FFI returns the ffi instance used by this Lua state.
-func (s *State) FFI() *ffi {
-	return s.ffi
-}
-
 // Lib returns the parent Lib instance that created this state.
 func (s *State) Lib() *Lib {
 	return s.lib
