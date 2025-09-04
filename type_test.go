@@ -99,7 +99,7 @@ func (s *Suite) TestTypeToGoFunction(assert *require.Assertions, L *lua.State) {
 	assert.Equal(expected, L.ToString(-1))
 	L.Pop(1)
 
-	L.PushCFunction(cFunc)
+	L.PushCFunction(uintptr(cFunc))
 	assert.NoError(L.PCall(0, 1, 0))
 	assert.Equal(expected, L.ToString(-1))
 	L.Pop(1)
