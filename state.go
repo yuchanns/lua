@@ -24,18 +24,13 @@ type State struct {
 
 	luaL unsafe.Pointer
 
-	// SAFETY: refAlloc holds a reference to the allocator's user data
-	// to prevent garbage collection while the Lua state is active.
-	refAlloc unsafe.Pointer
-
 	unwindingProtection bool
 }
 
-func newState(ffi *ffi, o *stateOpt) (L *State) {
+func newState(lib *Lib, o *stateOpt) (L *State) {
+	ffi := lib.ffi
 	var luaL unsafe.Pointer
-	var refAlloc unsafe.Pointer
 	if o.userData != nil && o.alloc != 0 {
-		refAlloc = o.userData
 		luaL = ffi.LuaNewstate(o.alloc, o.userData)
 	} else {
 		luaL = ffi.LuaLNewstate()
@@ -44,8 +39,8 @@ func newState(ffi *ffi, o *stateOpt) (L *State) {
 	L = &State{
 		ffi:  ffi,
 		luaL: luaL,
+		lib:  lib,
 
-		refAlloc:            refAlloc,
 		unwindingProtection: !o.withoutUwindingProtection,
 	}
 
@@ -87,7 +82,6 @@ func (s *State) Close() {
 
 	s.ffi.LuaClose(s.luaL)
 	s.luaL = nil
-	s.refAlloc = nil
 }
 
 type GoFunc func(L *State) int
