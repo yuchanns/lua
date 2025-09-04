@@ -20,6 +20,7 @@ type stateOpt struct {
 // See: https://www.lua.org/manual/5.4/manual.html#lua_State
 type State struct {
 	ffi *ffi
+	lib *Lib
 
 	luaL unsafe.Pointer
 
@@ -65,6 +66,11 @@ func (s *State) FFI() *ffi {
 	return s.ffi
 }
 
+// Lib returns the parent Lib instance that created this state.
+func (s *State) Lib() *Lib {
+	return s.lib
+}
+
 // L returns the underlying unsafe.Pointer to the Lua state, allowing direct access to and modify the C API.
 func (s *State) L() unsafe.Pointer {
 	return s.luaL
@@ -97,7 +103,7 @@ type GoFunc func(L *State) int
 // See: https://www.lua.org/manual/5.4/manual.html#lua_atpanic
 func (s *State) AtPanic(fn GoFunc) (old unsafe.Pointer) {
 	panicf := purego.NewCallback(func(L unsafe.Pointer) int {
-		state := s.Clone(L)
+		state := s.lib.BuildState(L)
 		return fn(state)
 	})
 	return s.ffi.LuaAtpanic(s.luaL, panicf)
@@ -120,15 +126,6 @@ func (s *State) CheckError(status int) error {
 	return &Error{
 		status:  status,
 		message: msg,
-	}
-}
-
-func (s *State) Clone(L unsafe.Pointer) *State {
-	return &State{
-		ffi:                 s.ffi,
-		luaL:                L,
-		refAlloc:            s.refAlloc,
-		unwindingProtection: s.unwindingProtection,
 	}
 }
 
@@ -322,7 +319,7 @@ type WarnFunc func(L *State, msg string, tocont int)
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setwarnf
 func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 	s.ffi.LuaSetwarnf(s.luaL, purego.NewCallback(func(ud unsafe.Pointer, msg *byte, tocont int) {
-		state := s.Clone(ud)
+		state := s.lib.BuildState(ud)
 		fn(state, bytePtrToString(msg), tocont)
 	}), ud)
 }
@@ -337,7 +334,7 @@ func (s *State) Requiref(modname string, openf GoFunc, global bool) {
 		glb = 1
 	}
 	s.ffi.LuaLRequiref(s.luaL, mname, purego.NewCallback(func(L unsafe.Pointer) int {
-		state := s.Clone(L)
+		state := s.lib.BuildState(L)
 		return openf(state)
 	}), glb)
 }

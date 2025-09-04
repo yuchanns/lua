@@ -62,6 +62,25 @@ func (l *Lib) NewState(o ...stateOptFunc) (state *State, err error) {
 	}
 
 	state = newState(l.ffi, opt)
+	state.lib = l
+
+	return
+}
+
+// BuildState create a existing Lua state from a given lua_State pointer.
+func (l *Lib) BuildState(L unsafe.Pointer, o ...stateOptFunc) (state *State) {
+	opt := &stateOpt{}
+	for _, fn := range o {
+		fn(opt)
+	}
+
+	state = &State{
+		ffi:  l.ffi,
+		luaL: L,
+		lib:  l,
+
+		unwindingProtection: !opt.withoutUwindingProtection,
+	}
 
 	return
 }

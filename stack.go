@@ -147,7 +147,7 @@ func (s *State) PushString(sv string) (ret *byte) {
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushcclosure
 func (s *State) PushGoClousure(f GoFunc, n int) {
 	s.ffi.LuaPushgoclosure(s.luaL, purego.NewCallback(func(L unsafe.Pointer) int {
-		state := s.Clone(L)
+		state := s.lib.BuildState(L)
 		return f(state)
 	}), n)
 }
