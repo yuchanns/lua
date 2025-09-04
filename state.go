@@ -56,6 +56,14 @@ func newState(lib *Lib, o *stateOpt) (L *State) {
 	return L
 }
 
+func (s *State) clone(L unsafe.Pointer) *State {
+	var o []stateOptFunc
+	if !s.unwindingProtection {
+		o = append(o, WithoutUnwindingProtection())
+	}
+	return s.lib.BuildState(L, o...)
+}
+
 // Lib returns the parent Lib instance that created this state.
 func (s *State) Lib() *Lib {
 	return s.lib
@@ -92,7 +100,7 @@ type GoFunc func(L *State) int
 // See: https://www.lua.org/manual/5.4/manual.html#lua_atpanic
 func (s *State) AtPanic(fn GoFunc) (old unsafe.Pointer) {
 	panicf := purego.NewCallback(func(L unsafe.Pointer) int {
-		state := s.lib.BuildState(L)
+		state := s.clone(L)
 		return fn(state)
 	})
 	return s.ffi.LuaAtpanic(s.luaL, panicf)
@@ -308,7 +316,7 @@ type WarnFunc func(L *State, msg string, tocont int)
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setwarnf
 func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 	s.ffi.LuaSetwarnf(s.luaL, purego.NewCallback(func(ud unsafe.Pointer, msg *byte, tocont int) {
-		state := s.lib.BuildState(ud)
+		state := s.clone(ud)
 		fn(state, bytePtrToString(msg), tocont)
 	}), ud)
 }
@@ -323,7 +331,7 @@ func (s *State) Requiref(modname string, openf GoFunc, global bool) {
 		glb = 1
 	}
 	s.ffi.LuaLRequiref(s.luaL, mname, purego.NewCallback(func(L unsafe.Pointer) int {
-		state := s.lib.BuildState(L)
+		state := s.clone(L)
 		return openf(state)
 	}), glb)
 }

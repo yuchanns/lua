@@ -146,8 +146,8 @@ func (s *State) PushString(sv string) (ret *byte) {
 // process, and any memory allocated for these callbacks is never released.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushcclosure
 func (s *State) PushGoClousure(f GoFunc, n int) {
-	s.ffi.LuaPushgoclosure(s.luaL, purego.NewCallback(func(L unsafe.Pointer) int {
-		state := s.lib.BuildState(L)
+	s.ffi.LuaPushcclousure(s.luaL, purego.NewCallback(func(L unsafe.Pointer) int {
+		state := s.clone(L)
 		return f(state)
 	}), n)
 }
@@ -205,12 +205,12 @@ func (s *State) PushGoFunction(f GoFunc) {
 
 // PushCFunction pushes a C function pointer as a Lua C closure with no upvalues.
 // Typically used with C function pointers from ToCFunction
-func (s *State) PushCFunction(f unsafe.Pointer) {
+func (s *State) PushCFunction(f uintptr) {
 	s.PushCClousure(f, 0)
 }
 
 // PushCClousure pushes a C function pointer as a Lua C closure with n upvalues.
 // Typically used with C function pointers from ToCFunction
-func (s *State) PushCClousure(f unsafe.Pointer, n int) {
+func (s *State) PushCClousure(f uintptr, n int) {
 	s.ffi.LuaPushcclousure(s.luaL, f, n)
 }

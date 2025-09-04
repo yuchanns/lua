@@ -77,16 +77,15 @@ type ffi struct {
 	LuaLen      func(L unsafe.Pointer, idx int)                        `ffi:"lua_len,gte=503"`
 
 	// Push functions
-	LuaPushnil           func(L unsafe.Pointer)                          `ffi:"lua_pushnil,gte=503"`
-	LuaPushnumber        func(L unsafe.Pointer, n float64)               `ffi:"lua_pushnumber,gte=503"`
-	LuaPushinteger       func(L unsafe.Pointer, n int64)                 `ffi:"lua_pushinteger,gte=503"`
-	LuaPushlstring       func(L unsafe.Pointer, s *byte, len int) *byte  `ffi:"lua_pushlstring,gte=503"`
-	LuaPushstring        func(L unsafe.Pointer, s *byte) *byte           `ffi:"lua_pushstring,gte=503"`
-	LuaPushgoclosure     func(L unsafe.Pointer, f uintptr, n int)        `ffi:"lua_pushcclosure,gte=503"`
-	LuaPushcclousure     func(L unsafe.Pointer, f unsafe.Pointer, n int) `ffi:"lua_pushcclosure,gte=503"`
-	LuaPushboolean       func(L unsafe.Pointer, b int) int               `ffi:"lua_pushboolean,gte=503"`
-	LuaPushlightuserdata func(L unsafe.Pointer, p unsafe.Pointer)        `ffi:"lua_pushlightuserdata,gte=503"`
-	LuaPushthread        func(L unsafe.Pointer) int                      `ffi:"lua_pushthread,gte=503"`
+	LuaPushnil           func(L unsafe.Pointer)                         `ffi:"lua_pushnil,gte=503"`
+	LuaPushnumber        func(L unsafe.Pointer, n float64)              `ffi:"lua_pushnumber,gte=503"`
+	LuaPushinteger       func(L unsafe.Pointer, n int64)                `ffi:"lua_pushinteger,gte=503"`
+	LuaPushlstring       func(L unsafe.Pointer, s *byte, len int) *byte `ffi:"lua_pushlstring,gte=503"`
+	LuaPushstring        func(L unsafe.Pointer, s *byte) *byte          `ffi:"lua_pushstring,gte=503"`
+	LuaPushcclousure     func(L unsafe.Pointer, f uintptr, n int)       `ffi:"lua_pushcclosure,gte=503"`
+	LuaPushboolean       func(L unsafe.Pointer, b int) int              `ffi:"lua_pushboolean,gte=503"`
+	LuaPushlightuserdata func(L unsafe.Pointer, p unsafe.Pointer)       `ffi:"lua_pushlightuserdata,gte=503"`
+	LuaPushthread        func(L unsafe.Pointer) int                     `ffi:"lua_pushthread,gte=503"`
 
 	// Table and field functions
 	LuaCreatetable func(L unsafe.Pointer, narr, nrec int)         `ffi:"lua_createtable,gte=503"`
