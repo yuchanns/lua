@@ -437,10 +437,10 @@ func (s *Suite) TestPCall(assert *require.Assertions, L *lua.State) {
 	}
 	L.Pop(5)
 
-	L.PushGoFunction(func(L *lua.State) int {
+	L.PushCFunction(lua.NewCallback(func(L *lua.State) int {
 		assert.Equal("hello", L.ToString(1))
 		return 0
-	})
+	}, L.Lib()))
 	L.SetGlobal("asserteq")
 	err = L.LoadString("asserteq('hello')")
 	assert.NoError(err)
@@ -497,10 +497,10 @@ func (s *Suite) TestCall(assert *require.Assertions, L *lua.State) {
 	}
 	L.Pop(5)
 
-	L.PushGoFunction(func(L *lua.State) int {
+	L.PushCFunction(lua.NewCallback(func(L *lua.State) int {
 		assert.Equal("hello", L.ToString(1))
 		return 0
-	})
+	}, L.Lib()))
 	L.SetGlobal("asserteq")
 	err = L.LoadString("asserteq('hello')")
 	assert.NoError(err)
@@ -575,28 +575,28 @@ func (s *Suite) TestGlobal(assert *require.Assertions, L *lua.State) {
 }
 
 func (s *Suite) TestTraceback(assert *require.Assertions, L *lua.State) {
-	L.PushGoFunction(func(L *lua.State) int {
+	L.PushCFunction(lua.NewCallback(func(L *lua.State) int {
 		L.PushString("This is a test error")
 		L.Traceback(L, "test_traceback", 0)
 		return 2
-	})
+	}, L.Lib()))
 	L.SetGlobal("test_traceback_func")
 	assert.NoError(L.DoString(`print(test_traceback_func())`))
 }
 
 func (s *Suite) TestPCallGoFunction(assert *require.Assertions, L *lua.State) {
-	L.PushGoFunction(func(L *lua.State) int {
+	L.PushCFunction(lua.NewCallback(func(L *lua.State) int {
 		L.Errorf("This is a test error")
 		return 0
-	})
+	}, L.Lib()))
 	L.SetGlobal("test_func")
 
 	assert.Error(L.DoString(`pcall(test_func())`))
 
-	L.PushGoFunction(func(L *lua.State) int {
+	L.PushCFunction(lua.NewCallback(func(L *lua.State) int {
 		assert.Error(L.DoString(L.ToString(1)))
 		return 0
-	})
+	}, L.Lib()))
 	L.SetGlobal("do_string")
 
 	assert.NoError(L.DoString(`do_string("pcall(test_func())")`))
@@ -628,22 +628,24 @@ func (s *Suite) TestRef(assert *require.Assertions, L *lua.State) {
 }
 
 func (s *Suite) TestNewLib(assert *require.Assertions, L *lua.State) {
+	fptr := lua.NewCallback(func(L *lua.State) int {
+		L.PushNumber(L.ToNumber(1) + L.ToNumber(2))
+		return 1
+	}, L.Lib())
+	fptr2 := lua.NewCallback(func(L *lua.State) int {
+		a := L.ToNumber(1)
+		b := L.ToNumber(2)
+		L.PushNumber(a + b + L.ToNumber(L.UpValueIndex(1)))
+		return 1
+	}, L.Lib())
 	L.Requiref("mylib", func(L *lua.State) int {
 		l := []*lua.Reg{
-			{"add", func(L *lua.State) int {
-				L.PushNumber(L.ToNumber(1) + L.ToNumber(2))
-				return 1
-			}},
+			{"add", fptr},
 		}
 		L.NewLib(l)
 
 		l2 := []*lua.Reg{
-			{"addwithupvalue", func(L *lua.State) int {
-				a := L.ToNumber(1)
-				b := L.ToNumber(2)
-				L.PushNumber(a + b + L.ToNumber(L.UpValueIndex(1)))
-				return 1
-			}},
+			{"addwithupvalue", fptr2},
 		}
 		L.PushNumber(10) // Upvalue for addwithupvalue
 		L.SetFuncs(l2, 1)

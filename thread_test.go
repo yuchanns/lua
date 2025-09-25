@@ -169,7 +169,7 @@ func (s *Suite) TestThreadYield(assert *require.Assertions, t *testing.T) {
 		assert.NoError(L.YieldK(1, unsafe.Pointer(fc), fibCont))
 		return 1
 	}
-	L.PushGoFunction(fib)
+	L.PushCFunction(lua.NewCallback(fib, s.lib))
 	L.SetGlobal("fib")
 
 	assert.NoError(L.DoFile("testdata/resume.lua"))

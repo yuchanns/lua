@@ -86,7 +86,7 @@ func (s *Suite) TestTypeToGoFunction(assert *require.Assertions, L *lua.State) {
 		return 1
 	}
 
-	L.PushGoFunction(testCFunc)
+	L.PushCFunction(lua.NewCallback(testCFunc, L.Lib()))
 
 	assert.True(L.IsGoFunction(-1))
 	assert.Equal(lua.LUA_TFUNCTION, L.Type(-1))
@@ -175,18 +175,18 @@ func (s *Suite) TestTypeToRawLen(assert *require.Assertions, L *lua.State) {
 }
 
 func (s *Suite) TestFunction(assert *require.Assertions, L *lua.State) {
-	L.PushGoFunction(func(L *lua.State) int {
+	L.PushCFunction(lua.NewCallback(func(L *lua.State) int {
 		number := L.ToNumber(1)
 		assert.Equal(number, 42.0)
 		return 0
-	})
+	}, L.Lib()))
 	L.SetGlobal("print_number")
 
-	L.PushGoFunction(func(L *lua.State) int {
+	L.PushCFunction(lua.NewCallback(func(L *lua.State) int {
 		x := L.CheckNumber(1)
 		L.PushNumber(x * 2)
 		return 1
-	})
+	}, L.Lib()))
 	L.SetGlobal("double_number")
 
 	assert.NoError(L.DoString(`print_number(double_number(21))`))
@@ -194,11 +194,11 @@ func (s *Suite) TestFunction(assert *require.Assertions, L *lua.State) {
 
 func (s *Suite) TestFunctionUpValue(assert *require.Assertions, L *lua.State) {
 	L.PushString("World")
-	L.PushGoClousure(func(L *lua.State) int {
+	L.PushCClousure(lua.NewCallback(func(L *lua.State) int {
 		upValue := L.ToString(L.UpValueIndex(1))
 		L.PushString("Hello, " + upValue)
 		return 1
-	}, 1)
+	}, L.Lib()), 1)
 	L.PushValue(-1)
 	assert.NoError(L.PCall(0, 1, 0))
 	assert.Equal("Hello, World", L.ToString(-1))
@@ -360,7 +360,7 @@ func (s *Suite) TestCheckType(assert *require.Assertions, L *lua.State) {
 	L.CheckType(-1, lua.LUA_TNIL)
 	L.Pop(1)
 
-	L.PushGoFunction(func(L *lua.State) int { return 0 })
+	L.PushCFunction(lua.NewCallback(func(L *lua.State) int { return 0 }, L.Lib()))
 	L.CheckType(-1, lua.LUA_TFUNCTION)
 	L.Pop(1)
 
@@ -389,7 +389,7 @@ func (s *Suite) TestCheckAny(assert *require.Assertions, L *lua.State) {
 	L.CheckAny(-1)
 	L.Pop(1)
 
-	L.PushGoFunction(func(L *lua.State) int { return 0 })
+	L.PushCFunction(lua.NewCallback(func(L *lua.State) int { return 0 }, L.Lib()))
 	L.CheckAny(-1)
 	L.Pop(1)
 

@@ -348,7 +348,7 @@ func (s *State) Unref(idx int, ref int) {
 
 type Reg struct {
 	Name string
-	Func GoFunc
+	Func uintptr
 }
 
 // SetFuncs registers a list of Go functions as Lua C API functions in the current state.
@@ -358,7 +358,7 @@ func (s *State) SetFuncs(l []*Reg, nup int) {
 	var ll = make([]LuaLReg, 0, len(l)+1)
 	for _, reg := range l {
 		name, _ := bytePtrFromString(reg.Name)
-		s.PushGoFunction(reg.Func)
+		s.PushCFunction(reg.Func)
 		ll = append(ll, LuaLReg{
 			Name: name,
 			// trampoline to the Go function
