@@ -68,7 +68,7 @@ func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {
 
 	L.NewTable()
 	L.PushString("__index")
-	L.PushGoFunction(func(L *lua.State) int {
+	L.PushCFunction(lua.NewCallback(func(L *lua.State) int {
 		userdata := (*UserData)(L.ToUserData(1))
 		key := L.ToString(2)
 		switch key {
@@ -82,7 +82,7 @@ func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {
 			L.PushNil()
 			return 1
 		}
-	})
+	}, L.Lib()))
 	L.SetTable(-3)
 	L.SetIMetaTable(-2)
 
