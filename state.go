@@ -21,30 +21,15 @@ type State struct {
 	luaL unsafe.Pointer
 }
 
-func newState(o *stateOpt) (L *State) {
+func newState(o *stateOpt) (L unsafe.Pointer) {
 	ffi := luaLib.ffi
-	var luaL unsafe.Pointer
 	if o.userData != nil && o.alloc != 0 {
-		luaL = ffi.LuaNewstate(o.alloc, o.userData)
+		L = ffi.LuaNewstate(o.alloc, o.userData)
 	} else {
-		luaL = ffi.LuaLNewstate()
+		L = ffi.LuaLNewstate()
 	}
 
-	if o.ptr != nil {
-		L = o.ptr
-		*L = State{
-			luaL: luaL,
-		}
-	} else {
-		L = &State{
-			luaL: luaL,
-		}
-	}
-
-	// Convert Lua errors into Go panics
-	L.AtPanic(defaultPanicf)
-
-	return L
+	return
 }
 
 var defaultPanicf = NewCallback(func(L *State) int {

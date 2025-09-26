@@ -58,7 +58,7 @@ func Deinit() (err error) {
 // Additional options may be provided for custom allocators and user data.
 // Returns a State
 // Panics if the library is not initialized.
-func NewState(o ...stateOptFunc) (state *State) {
+func NewState(o ...stateOptFunc) (L *State) {
 	luaLib.assert()
 
 	opt := &stateOpt{}
@@ -66,18 +66,35 @@ func NewState(o ...stateOptFunc) (state *State) {
 		fn(opt)
 	}
 
-	state = newState(opt)
+	luaL := newState(opt)
+
+	L = BuildState(luaL, o...)
+
+	// Convert Lua errors into Go panics
+	L.AtPanic(defaultPanicf)
 
 	return
 }
 
 // BuildState create a existing Lua state from a given lua_State pointer.
 // Panics if the library is not initialized.
-func BuildState(L unsafe.Pointer) (state *State) {
+func BuildState(L unsafe.Pointer, o ...stateOptFunc) (state *State) {
 	luaLib.assert()
 
-	state = &State{
-		luaL: L,
+	opt := &stateOpt{}
+	for _, fn := range o {
+		fn(opt)
+	}
+
+	if opt.ptr != nil {
+		state = opt.ptr
+		*state = State{
+			luaL: L,
+		}
+	} else {
+		state = &State{
+			luaL: L,
+		}
 	}
 
 	return
