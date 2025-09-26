@@ -17,45 +17,21 @@ go get go.yuchanns.xyz/lua
 package main
 
 import (
-	_ "embed"
 	"fmt"
-	"os"
 
 	"go.yuchanns.xyz/lua"
 )
 
-//go:embed liblua54.so
-var luaLib []byte
-
 func main() {
-	f, err := os.CreateTemp("", "liblua54.*.so")
+	err := lua.Init("/path/to/lua/dynlib.so")
 	if err != nil {
 		fmt.Println("Error creating temp file:", err)
 		return
 	}
-	_, err = f.Write(luaLib)
-	if err != nil {
-		fmt.Println("Error writing to temp file:", err)
-		return
-	}
-	f.Close()
-	f.Chmod(os.ModePerm)
-	defer os.Remove(f.Name())
-
-	// Create a new Lua library instance
-	lib, err := lua.New(f.Name())
-	if err != nil {
-		fmt.Println("Error creating Lua library:", err)
-		return
-	}
-	defer lib.Close()
+	defer lua.Deinit()
 
 	// Create a new Lua state
-	L, err := lib.NewState()
-	if err != nil {
-		fmt.Println("Error creating Lua state:", err)
-		return
-	}
+	L := lua.NewState()
 	defer L.Close()
 
 	L.OpenLibs()
@@ -67,11 +43,11 @@ func main() {
 	}
 
 	// Call a Go function from Lua
-	L.PushCFunction(func(L *lua.State) int {
+	L.PushCFunction(lua.NewCallback(func(L *lua.State) int {
 		x := L.CheckNumber(1)
 		L.PushNumber(x * 2)
 		return 1
-	})
+	}))
 	if err := L.SetGlobal("double_number"); err != nil {
 		fmt.Println("Error:", err)
 		return

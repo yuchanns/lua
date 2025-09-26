@@ -82,7 +82,7 @@ func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {
 			L.PushNil()
 			return 1
 		}
-	}, L.Lib()))
+	}))
 	L.SetTable(-3)
 	L.SetIMetaTable(-2)
 
@@ -92,8 +92,7 @@ func (s *Suite) TestUserData(assert *require.Assertions, L *lua.State) {
 }
 
 func (s *Suite) TestUserDataUv(assert *require.Assertions, tt *testing.T) {
-	L, err := s.lib.NewState()
-	assert.NoError(err)
+	L := lua.NewState()
 	tt.Cleanup(L.Close)
 
 	if L.Version() < 504 {

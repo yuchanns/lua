@@ -129,8 +129,7 @@ func (s *Suite) TestThreadYield(assert *require.Assertions, t *testing.T) {
 		t.Skip("Skipping test on Windows as Yield is not supported now.")
 	}
 
-	L, err := s.lib.NewState()
-	assert.NoError(err)
+	L := lua.NewState()
 	t.Cleanup(L.Close)
 
 	L.OpenLibs()
@@ -169,7 +168,7 @@ func (s *Suite) TestThreadYield(assert *require.Assertions, t *testing.T) {
 		assert.NoError(L.YieldK(1, unsafe.Pointer(fc), fibCont))
 		return 1
 	}
-	L.PushCFunction(lua.NewCallback(fib, s.lib))
+	L.PushCFunction(lua.NewCallback(fib))
 	L.SetGlobal("fib")
 
 	assert.NoError(L.DoFile("testdata/resume.lua"))
