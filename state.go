@@ -295,16 +295,13 @@ func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 // Requiref loads a Lua module by name, calling the provided Go function to open it.
 // Due to the limitation of Purego, only a limited number of callbacks may be created in a single Go
 // process, and any memory allocated for these callbacks is never released.
-func (s *State) Requiref(modname string, openf GoFunc, global bool) {
+func (s *State) Requiref(modname string, openf uintptr, global bool) {
 	mname, _ := bytePtrFromString(modname)
 	var glb int
 	if global {
 		glb = 1
 	}
-	luaLib.ffi.LuaLRequiref(s.luaL, mname, purego.NewCallback(func(L unsafe.Pointer) int {
-		state := s.clone(L)
-		return openf(state)
-	}), glb)
+	luaLib.ffi.LuaLRequiref(s.luaL, mname, openf, glb)
 }
 
 // Ref creates a reference to the value at the given stack index, returning a unique reference ID.
