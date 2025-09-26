@@ -84,8 +84,6 @@ func BuildState(L unsafe.Pointer, o ...stateOptFunc) (state *State) {
 	state = &State{
 		ffi:  luaLib.ffi,
 		luaL: L,
-
-		unwindingProtection: !opt.withoutUwindingProtection,
 	}
 
 	return
@@ -130,15 +128,5 @@ func WithAlloc[T any](
 			return fn(t, ptr, osize, nsize)
 		})
 		o.userData = unsafe.Pointer(ud)
-	}
-}
-
-// WithoutUnwindingProtection indicates whether this state is created without goroutine stack
-// unwinding protected mode. Lua use `setjmp/longjmp` to handle errors, which is not
-// compatible with Go's goroutine stack unwinding and will cause syscall frames no longer
-// available on callback to Go code.
-func WithoutUnwindingProtection() stateOptFunc {
-	return func(o *stateOpt) {
-		o.withoutUwindingProtection = true
 	}
 }

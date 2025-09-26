@@ -11,8 +11,6 @@ import (
 type stateOpt struct {
 	alloc    uintptr
 	userData unsafe.Pointer
-
-	withoutUwindingProtection bool
 }
 
 // State represents a single Lua interpreter state, holding runtime and memory context.
@@ -22,8 +20,6 @@ type State struct {
 	ffi *ffi
 
 	luaL unsafe.Pointer
-
-	unwindingProtection bool
 }
 
 func newState(o *stateOpt) (L *State) {
@@ -38,27 +34,20 @@ func newState(o *stateOpt) (L *State) {
 	L = &State{
 		ffi:  ffi,
 		luaL: luaL,
-
-		unwindingProtection: !o.withoutUwindingProtection,
 	}
 
-	if L.unwindingProtection {
-		// Convert Lua errors into Go panics
-		L.AtPanic(func(L *State) int {
-			err := L.checkUnprotectedError()
+	// Convert Lua errors into Go panics
+	L.AtPanic(func(L *State) int {
+		err := L.checkUnprotectedError()
 
-			panic(err)
-		})
-	}
+		panic(err)
+	})
 
 	return L
 }
 
 func (s *State) clone(L unsafe.Pointer) *State {
 	var o []stateOptFunc
-	if !s.unwindingProtection {
-		o = append(o, WithoutUnwindingProtection())
-	}
 	return BuildState(L, o...)
 }
 
@@ -264,13 +253,6 @@ func (s *State) PCall(nargs, nresults, errfunc int) (err error) {
 // process, and any memory allocated for these callbacks is never released.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pcallk
 func (s *State) PCallK(nargs, nresults, errfunc int, ctx unsafe.Pointer, k LuaKFunction) (err error) {
-	var kb uintptr
-	if k != nil {
-		kb = purego.NewCallback(k)
-	}
-	if !s.unwindingProtection {
-		return s.CheckError(s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, kb))
-	}
 	defer func() {
 		if r := recover(); r != nil {
 			err = &Error{

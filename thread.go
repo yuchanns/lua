@@ -51,23 +51,19 @@ type KFunc func(*State, int, unsafe.Pointer) int
 // See: https://www.lua.org/manual/5.4/manual.html#lua_yieldk
 func (s *State) YieldK(nresults int, ctx unsafe.Pointer, k KFunc) (err error) {
 	protectionMsg := "unwinding protection"
-	if s.unwindingProtection {
-		defer func() {
-			if m := recover(); m != nil {
-				if msg, ok := m.(string); !ok || msg != protectionMsg {
-					panic(m) // re-raise the panic if it's not our hack
-				}
+	defer func() {
+		if m := recover(); m != nil {
+			if msg, ok := m.(string); !ok || msg != protectionMsg {
+				panic(m) // re-raise the panic if it's not our hack
 			}
-		}()
-	}
+		}
+	}()
 
 	var kb uintptr
 	if k != nil {
 		kb = purego.NewCallback(func(L unsafe.Pointer, status int, ctx unsafe.Pointer) int {
-			if s.unwindingProtection {
-				// Use panic instead of setjmp/longjmp to avoid issues with syscall frames
-				defer panic(protectionMsg)
-			}
+			// Use panic instead of setjmp/longjmp to avoid issues with syscall frames
+			defer panic(protectionMsg)
 
 			state := s.clone(L)
 			return k(state, status, ctx)
