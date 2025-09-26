@@ -11,19 +11,13 @@ import (
 type stateOpt struct {
 	alloc    uintptr
 	userData unsafe.Pointer
-
-	withoutUwindingProtection bool
 }
 
 // State represents a single Lua interpreter state, holding runtime and memory context.
 // It is the Go binding for the Lua C API's lua_State pointer, supporting all standard C API operations.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_State
 type State struct {
-	ffi *ffi
-
 	luaL unsafe.Pointer
-
-	unwindingProtection bool
 }
 
 func newState(o *stateOpt) (L *State) {
@@ -36,30 +30,21 @@ func newState(o *stateOpt) (L *State) {
 	}
 
 	L = &State{
-		ffi:  ffi,
 		luaL: luaL,
-
-		unwindingProtection: !o.withoutUwindingProtection,
 	}
 
-	if L.unwindingProtection {
-		// Convert Lua errors into Go panics
-		L.AtPanic(func(L *State) int {
-			err := L.checkUnprotectedError()
+	// Convert Lua errors into Go panics
+	L.AtPanic(func(L *State) int {
+		err := L.checkUnprotectedError()
 
-			panic(err)
-		})
-	}
+		panic(err)
+	})
 
 	return L
 }
 
 func (s *State) clone(L unsafe.Pointer) *State {
-	var o []stateOptFunc
-	if !s.unwindingProtection {
-		o = append(o, WithoutUnwindingProtection())
-	}
-	return BuildState(L, o...)
+	return BuildState(L)
 }
 
 // L returns the underlying unsafe.Pointer to the Lua state, allowing direct access to and modify the C API.
@@ -70,7 +55,7 @@ func (s *State) L() unsafe.Pointer {
 // OpenLibs loads all standard Lua libraries into the current state.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_openlibs
 func (s *State) OpenLibs() {
-	s.ffi.LuaLOpenlibs(s.luaL)
+	luaLib.ffi.LuaLOpenlibs(s.luaL)
 }
 
 // Close properly shuts down and deallocates the Lua state, freeing any owned resources.
@@ -81,7 +66,7 @@ func (s *State) Close() {
 		return
 	}
 
-	s.ffi.LuaClose(s.luaL)
+	luaLib.ffi.LuaClose(s.luaL)
 	s.luaL = nil
 }
 
@@ -96,13 +81,13 @@ func (s *State) AtPanic(fn GoFunc) (old unsafe.Pointer) {
 		state := s.clone(L)
 		return fn(state)
 	})
-	return s.ffi.LuaAtpanic(s.luaL, panicf)
+	return luaLib.ffi.LuaAtpanic(s.luaL, panicf)
 }
 
 // Version returns the current version of the Lua runtime loaded in this state.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_version
 func (s *State) Version() float64 {
-	return s.ffi.version
+	return luaLib.ffi.version
 }
 
 // CheckError transforms a Lua C API error code into a Go error,
@@ -130,27 +115,27 @@ func (s *State) checkUnprotectedError() error {
 func (s *State) Errorf(format string, args ...any) int {
 	msg := fmt.Sprintf(format, args...)
 	b, _ := bytePtrFromString(msg)
-	return s.ffi.LuaLError(s.luaL, b)
+	return luaLib.ffi.LuaLError(s.luaL, b)
 }
 
 // Traceback pushes a traceback message onto the stack, useful for debugging.
 func (s *State) Traceback(L1 *State, message string, level int) {
 	b, _ := bytePtrFromString(message)
-	s.ffi.LuaLTraceback(s.luaL, L1.luaL, b, level)
+	luaLib.ffi.LuaLTraceback(s.luaL, L1.luaL, b, level)
 }
 
 // SetGlobal sets a global variable in the Lua environment using the value at the top of the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setglobal
 func (s *State) SetGlobal(name string) {
 	n, _ := bytePtrFromString(name)
-	s.ffi.LuaSetglobal(s.luaL, n)
+	luaLib.ffi.LuaSetglobal(s.luaL, n)
 }
 
 // GetGlobal retrieves a global variable from the Lua environment and pushes it onto the stack.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_getglobal
 func (s *State) GetGlobal(name string) {
 	n, _ := bytePtrFromString(name)
-	s.ffi.LuaGetglobal(s.luaL, n)
+	luaLib.ffi.LuaGetglobal(s.luaL, n)
 }
 
 var reader = purego.NewCallback(func(_ unsafe.Pointer, ud unsafe.Pointer, sz *int) *byte {
@@ -182,7 +167,7 @@ func (s *State) Load(r io.Reader, chunkname string, mode ...string) (err error) 
 	// SAFETY: it is safe to pass the reader as an unsafe.Pointer because
 	// the reader immediately consumes the data from the io.Reader after
 	// the call to LuaLoad. So it will not outlive the io.Reader.
-	err = s.CheckError(s.ffi.LuaLoad(s.luaL, reader, unsafe.Pointer(&r), cname, m))
+	err = s.CheckError(luaLib.ffi.LuaLoad(s.luaL, reader, unsafe.Pointer(&r), cname, m))
 	return
 }
 
@@ -204,7 +189,7 @@ func (s *State) LoadBufferx(buff []byte, name string, mode ...string) (err error
 	if sz > 0 {
 		bf = &buff[0]
 	}
-	err = s.CheckError(s.ffi.LuaLLoadbufferx(s.luaL, bf, sz, b, m))
+	err = s.CheckError(luaLib.ffi.LuaLLoadbufferx(s.luaL, bf, sz, b, m))
 	return
 }
 
@@ -222,7 +207,7 @@ func (s *State) DoString(scode string) (err error) {
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_loadstring
 func (s *State) LoadString(scode string) (err error) {
 	n, _ := bytePtrFromString(scode)
-	err = s.CheckError(s.ffi.LuaLLoadstring(s.luaL, n))
+	err = s.CheckError(luaLib.ffi.LuaLLoadstring(s.luaL, n))
 	return
 }
 
@@ -244,7 +229,7 @@ func (s *State) LoadFilex(filename string, mode ...string) (err error) {
 	if len(mode) > 0 {
 		m, _ = bytePtrFromString(mode[0])
 	}
-	err = s.CheckError(s.ffi.LuaLLoadfilex(s.luaL, fname, m))
+	err = s.CheckError(luaLib.ffi.LuaLLoadfilex(s.luaL, fname, m))
 	return
 }
 
@@ -264,13 +249,6 @@ func (s *State) PCall(nargs, nresults, errfunc int) (err error) {
 // process, and any memory allocated for these callbacks is never released.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pcallk
 func (s *State) PCallK(nargs, nresults, errfunc int, ctx unsafe.Pointer, k LuaKFunction) (err error) {
-	var kb uintptr
-	if k != nil {
-		kb = purego.NewCallback(k)
-	}
-	if !s.unwindingProtection {
-		return s.CheckError(s.ffi.LuaPcallk(s.luaL, nargs, nresults, errfunc, ctx, kb))
-	}
 	defer func() {
 		if r := recover(); r != nil {
 			err = &Error{
@@ -298,7 +276,7 @@ func (s *State) CallK(nargs, nresults int, ctx unsafe.Pointer, k LuaKFunction) {
 	if k != nil {
 		kb = purego.NewCallback(k)
 	}
-	s.ffi.LuaCallk(s.luaL, nargs, nresults, ctx, kb)
+	luaLib.ffi.LuaCallk(s.luaL, nargs, nresults, ctx, kb)
 }
 
 type WarnFunc func(L *State, msg string, tocont int)
@@ -308,7 +286,7 @@ type WarnFunc func(L *State, msg string, tocont int)
 // process, and any memory allocated for these callbacks is never released.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setwarnf
 func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
-	s.ffi.LuaSetwarnf(s.luaL, purego.NewCallback(func(ud unsafe.Pointer, msg *byte, tocont int) {
+	luaLib.ffi.LuaSetwarnf(s.luaL, purego.NewCallback(func(ud unsafe.Pointer, msg *byte, tocont int) {
 		state := s.clone(ud)
 		fn(state, bytePtrToString(msg), tocont)
 	}), ud)
@@ -317,26 +295,23 @@ func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 // Requiref loads a Lua module by name, calling the provided Go function to open it.
 // Due to the limitation of Purego, only a limited number of callbacks may be created in a single Go
 // process, and any memory allocated for these callbacks is never released.
-func (s *State) Requiref(modname string, openf GoFunc, global bool) {
+func (s *State) Requiref(modname string, openf uintptr, global bool) {
 	mname, _ := bytePtrFromString(modname)
 	var glb int
 	if global {
 		glb = 1
 	}
-	s.ffi.LuaLRequiref(s.luaL, mname, purego.NewCallback(func(L unsafe.Pointer) int {
-		state := s.clone(L)
-		return openf(state)
-	}), glb)
+	luaLib.ffi.LuaLRequiref(s.luaL, mname, openf, glb)
 }
 
 // Ref creates a reference to the value at the given stack index, returning a unique reference ID.
 func (s *State) Ref(idx int) int {
-	return s.ffi.LuaLRef(s.luaL, idx)
+	return luaLib.ffi.LuaLRef(s.luaL, idx)
 }
 
 // Unref removes a reference created by Ref, the entry is removed from the table.
 func (s *State) Unref(idx int, ref int) {
-	s.ffi.LuaLUnref(s.luaL, idx, ref)
+	luaLib.ffi.LuaLUnref(s.luaL, idx, ref)
 }
 
 type Reg struct {
@@ -360,7 +335,7 @@ func (s *State) SetFuncs(l []*Reg, nup int) {
 		s.Pop(1)
 	}
 	ll = append(ll, LuaLReg{nil, nil}) // Add a sentinel entry with zero values
-	s.ffi.LuaLSetfuncs(s.luaL, unsafe.Pointer(unsafe.SliceData(ll)), nup)
+	luaLib.ffi.LuaLSetfuncs(s.luaL, unsafe.Pointer(unsafe.SliceData(ll)), nup)
 }
 
 // NewLibTable creates a new Lua table on the stack and sets it as the current library table.

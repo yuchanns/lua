@@ -7,43 +7,43 @@ import (
 // IsNumber returns true if the value at idx is a number or can be converted to a number.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_isnumber
 func (s *State) IsNumber(idx int) bool {
-	return s.ffi.LuaIsnumber(s.luaL, idx) != 0
+	return luaLib.ffi.LuaIsnumber(s.luaL, idx) != 0
 }
 
 // IsString returns true if the value at idx is a string or can be converted to a string.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_isstring
 func (s *State) IsString(idx int) bool {
-	return s.ffi.LuaIsstring(s.luaL, idx) != 0
+	return luaLib.ffi.LuaIsstring(s.luaL, idx) != 0
 }
 
 // IsGoFunction returns true if the value at idx is a C function.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_iscfunction
 func (s *State) IsGoFunction(idx int) bool {
-	return s.ffi.LuaIscfunction(s.luaL, idx) != 0
+	return luaLib.ffi.LuaIscfunction(s.luaL, idx) != 0
 }
 
 // IsInteger returns true if the value at idx is an integer.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_isinteger
 func (s *State) IsInteger(idx int) bool {
-	return s.ffi.LuaIsinteger(s.luaL, idx) != 0
+	return luaLib.ffi.LuaIsinteger(s.luaL, idx) != 0
 }
 
 // IsUserData returns true if the value at idx is a userdata or full userdata.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_isuserdata
 func (s *State) IsUserData(idx int) bool {
-	return s.ffi.LuaIsuserdata(s.luaL, idx) != 0
+	return luaLib.ffi.LuaIsuserdata(s.luaL, idx) != 0
 }
 
 // Type returns the type code of the value at idx.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_type
 func (s *State) Type(idx int) int {
-	return s.ffi.LuaType(s.luaL, idx)
+	return luaLib.ffi.LuaType(s.luaL, idx)
 }
 
 // TypeName returns the name of the given type code.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_typename
 func (s *State) TypeName(tp int) string {
-	p := s.ffi.LuaTypename(s.luaL, tp)
+	p := luaLib.ffi.LuaTypename(s.luaL, tp)
 	if p == nil {
 		return ""
 	}
@@ -93,7 +93,7 @@ func (s *State) ToNumberx(idx int, isnum bool) float64 {
 	if isnum {
 		isNumber = 1
 	}
-	return s.ffi.LuaTonumberx(s.luaL, idx, unsafe.Pointer(&isNumber))
+	return luaLib.ffi.LuaTonumberx(s.luaL, idx, unsafe.Pointer(&isNumber))
 }
 
 // ToIntegerx converts the value at idx to an integer (int64).
@@ -104,13 +104,13 @@ func (s *State) ToIntegerx(idx int, isnum bool) int64 {
 	if isnum {
 		isNumber = 1
 	}
-	return s.ffi.LuaTointegerx(s.luaL, idx, unsafe.Pointer(&isNumber))
+	return luaLib.ffi.LuaTointegerx(s.luaL, idx, unsafe.Pointer(&isNumber))
 }
 
 // ToLString converts the value at idx to a string and optionally returns its length.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_tolstring
 func (s *State) ToLString(idx int, size *int) string {
-	p := s.ffi.LuaTolstring(s.luaL, idx, unsafe.Pointer(size))
+	p := luaLib.ffi.LuaTolstring(s.luaL, idx, unsafe.Pointer(size))
 	if p == nil {
 		return ""
 	}
@@ -120,7 +120,7 @@ func (s *State) ToLString(idx int, size *int) string {
 // ToBoolean converts the Lua value at idx to a Go boolean.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_toboolean
 func (s *State) ToBoolean(idx int) bool {
-	return s.ffi.LuaToboolean(s.luaL, idx) != 0
+	return luaLib.ffi.LuaToboolean(s.luaL, idx) != 0
 }
 
 // ToNumber converts the value at idx to a Lua number (float64, without extra flag).
@@ -141,34 +141,34 @@ func (s *State) ToString(idx int) string {
 // ToUserData returns the userdata pointer at idx, or nil if it's not userdata.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_touserdata
 func (s *State) ToUserData(idx int) unsafe.Pointer {
-	return s.ffi.LuaTouserdata(s.luaL, idx)
+	return luaLib.ffi.LuaTouserdata(s.luaL, idx)
 }
 
 // ToCFunction returns the C function pointer at idx, or nil if not a C function.
 // There is no ToGoFunction because Go functions are not convertible once pushed onto the stack.
 // The returned pointer can be used with PushCFunctionPointer to push it back onto the stack.
 func (s *State) ToCFunction(idx int) unsafe.Pointer {
-	return s.ffi.LuaTocfunction(s.luaL, idx)
+	return luaLib.ffi.LuaTocfunction(s.luaL, idx)
 }
 
 // RawLen returns the length of value at idx (arrays, strings, tables).
 // See: https://www.lua.org/manual/5.4/manual.html#lua_rawlen
 func (s *State) RawLen(idx int) uint {
-	return s.ffi.LuaRawlen(s.luaL, idx)
+	return luaLib.ffi.LuaRawlen(s.luaL, idx)
 }
 
 // CheckNumber checks whether the value at idx is a number and returns it.
 // Raises an error if it is not a number.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_checknumber
 func (s *State) CheckNumber(idx int) float64 {
-	return s.ffi.LuaLChecknumber(s.luaL, idx)
+	return luaLib.ffi.LuaLChecknumber(s.luaL, idx)
 }
 
 // CheckInteger checks whether the value at idx is an integer and returns it.
 // Raises an error if it is not.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_checkinteger
 func (s *State) CheckInteger(idx int) int64 {
-	return s.ffi.LuaLCheckinteger(s.luaL, idx)
+	return luaLib.ffi.LuaLCheckinteger(s.luaL, idx)
 }
 
 func (s *State) CheckString(idx int) string {
@@ -183,38 +183,38 @@ func (s *State) CheckLString(idx int, size *int) string {
 	if size != nil {
 		sz = unsafe.Pointer(size)
 	}
-	return bytePtrToString(s.ffi.LuaLChecklstring(s.luaL, idx, sz))
+	return bytePtrToString(luaLib.ffi.LuaLChecklstring(s.luaL, idx, sz))
 }
 
 // CheckType checks whether the value at idx has the given type, raising error if not.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_checktype
 func (s *State) CheckType(idx int, tp int) {
-	s.ffi.LuaLChecktype(s.luaL, idx, tp)
+	luaLib.ffi.LuaLChecktype(s.luaL, idx, tp)
 }
 
 // CheckAny checks that the value at idx is not none (must exist, any type), raises error if none.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_checkany
 func (s *State) CheckAny(idx int) {
-	s.ffi.LuaLCheckany(s.luaL, idx)
+	luaLib.ffi.LuaLCheckany(s.luaL, idx)
 }
 
 // OptNumber fetches an optional number arg at idx, or uses def if not present or not number.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_optnumber
 func (s *State) OptNumber(idx int, def float64) float64 {
-	return s.ffi.LuaLOptnumber(s.luaL, idx, def)
+	return luaLib.ffi.LuaLOptnumber(s.luaL, idx, def)
 }
 
 // OptInteger fetches an optional integer arg at idx, or uses def if not present or not integer.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_optinteger
 func (s *State) OptInteger(idx int, def int64) int64 {
-	return s.ffi.LuaLOptinteger(s.luaL, idx, def)
+	return luaLib.ffi.LuaLOptinteger(s.luaL, idx, def)
 }
 
 // OptLString fetches an optional string arg at idx, or uses def if not present or not string.
 // Returns the Go string, or def.
 // See: https://www.lua.org/manual/5.4/manual.html#luaL_optlstring
-func (s *State) OptLString(idx int, def string, size *int) (string) {
+func (s *State) OptLString(idx int, def string, size *int) string {
 	d, _ := bytePtrFromString(def)
-	p := s.ffi.LuaLOptlstring(s.luaL, idx, d, unsafe.Pointer(size))
+	p := luaLib.ffi.LuaLOptlstring(s.luaL, idx, d, unsafe.Pointer(size))
 	return bytePtrToString(p)
 }

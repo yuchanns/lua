@@ -601,10 +601,10 @@ func (s *Suite) TestPCallGoFunction(assert *require.Assertions, L *lua.State) {
 }
 
 func (s *Suite) TestRequiref(assert *require.Assertions, L *lua.State) {
-	L.Requiref("testmodule", func(L *lua.State) int {
+	L.Requiref("testmodule", lua.NewCallback(func(L *lua.State) int {
 		L.PushString("Hello from testmodule")
 		return 1
-	}, false)
+	}), false)
 
 	assert.NoError(L.DoString(`local m = require("testmodule"); return m`))
 
@@ -636,7 +636,7 @@ func (s *Suite) TestNewLib(assert *require.Assertions, L *lua.State) {
 		L.PushNumber(a + b + L.ToNumber(L.UpValueIndex(1)))
 		return 1
 	})
-	L.Requiref("mylib", func(L *lua.State) int {
+	L.Requiref("mylib", lua.NewCallback(func(L *lua.State) int {
 		l := []*lua.Reg{
 			{"add", fptr},
 		}
@@ -648,7 +648,7 @@ func (s *Suite) TestNewLib(assert *require.Assertions, L *lua.State) {
 		L.PushNumber(10) // Upvalue for addwithupvalue
 		L.SetFuncs(l2, 1)
 		return 1
-	}, false)
+	}), false)
 	L.Pop(1)
 
 	assert.NoError(L.DoString(`

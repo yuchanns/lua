@@ -73,19 +73,11 @@ func NewState(o ...stateOptFunc) (state *State) {
 
 // BuildState create a existing Lua state from a given lua_State pointer.
 // Panics if the library is not initialized.
-func BuildState(L unsafe.Pointer, o ...stateOptFunc) (state *State) {
+func BuildState(L unsafe.Pointer) (state *State) {
 	luaLib.assert()
 
-	opt := &stateOpt{}
-	for _, fn := range o {
-		fn(opt)
-	}
-
 	state = &State{
-		ffi:  luaLib.ffi,
 		luaL: L,
-
-		unwindingProtection: !opt.withoutUwindingProtection,
 	}
 
 	return
@@ -105,9 +97,9 @@ func FFI() *ffi {
 // Due to the limitation of Purego, only a limited number (2000) of callbacks
 // may be created in a single Go process, and any memory allocated for
 // these callbacks is never released.
-func NewCallback(f GoFunc, o ...stateOptFunc) uintptr {
+func NewCallback(f GoFunc) uintptr {
 	return purego.NewCallback(func(L unsafe.Pointer) int {
-		state := BuildState(L, o...)
+		state := BuildState(L)
 		return f(state)
 	})
 }
@@ -130,15 +122,5 @@ func WithAlloc[T any](
 			return fn(t, ptr, osize, nsize)
 		})
 		o.userData = unsafe.Pointer(ud)
-	}
-}
-
-// WithoutUnwindingProtection indicates whether this state is created without goroutine stack
-// unwinding protected mode. Lua use `setjmp/longjmp` to handle errors, which is not
-// compatible with Go's goroutine stack unwinding and will cause syscall frames no longer
-// available on callback to Go code.
-func WithoutUnwindingProtection() stateOptFunc {
-	return func(o *stateOpt) {
-		o.withoutUwindingProtection = true
 	}
 }
