@@ -44,8 +44,7 @@ func newState(o *stateOpt) (L *State) {
 }
 
 func (s *State) clone(L unsafe.Pointer) *State {
-	var o []stateOptFunc
-	return BuildState(L, o...)
+	return BuildState(L)
 }
 
 // L returns the underlying unsafe.Pointer to the Lua state, allowing direct access to and modify the C API.
