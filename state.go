@@ -11,6 +11,7 @@ import (
 type stateOpt struct {
 	alloc    uintptr
 	userData unsafe.Pointer
+	ptr      *State
 }
 
 // State represents a single Lua interpreter state, holding runtime and memory context.
@@ -29,8 +30,15 @@ func newState(o *stateOpt) (L *State) {
 		luaL = ffi.LuaLNewstate()
 	}
 
-	L = &State{
-		luaL: luaL,
+	if o.ptr != nil {
+		L = o.ptr
+		*L = State{
+			luaL: luaL,
+		}
+	} else {
+		L = &State{
+			luaL: luaL,
+		}
 	}
 
 	// Convert Lua errors into Go panics
