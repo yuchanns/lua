@@ -8,8 +8,8 @@ import (
 
 // NewThread creates a new Lua thread (coroutine), pushes it onto the stack, and returns its State.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_newthread
-func (s *State) NewThread() *State {
-	return BuildState(luaLib.ffi.LuaNewthread(s.luaL))
+func (s *State) NewThread(o ...stateOptFunc) *State {
+	return BuildState(luaLib.ffi.LuaNewthread(s.luaL), o...)
 }
 
 // CloseThread closes the specified Lua thread (or the currently running thread if from is nil).
@@ -116,8 +116,8 @@ func (s *State) IsYieldable() bool {
 
 // ToThread returns the Lua thread at the given stack index as a State.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_tothread
-func (s *State) ToThread(idx int) *State {
-	return BuildState(luaLib.ffi.LuaTothread(s.luaL, idx))
+func (s *State) ToThread(idx int, o ...stateOptFunc) *State {
+	return BuildState(luaLib.ffi.LuaTothread(s.luaL, idx), o...)
 }
 
 // ToPointer returns the Lua value at the given stack index as an unsafe.Pointer.
