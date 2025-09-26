@@ -82,7 +82,6 @@ func BuildState(L unsafe.Pointer, o ...stateOptFunc) (state *State) {
 	}
 
 	state = &State{
-		ffi:  luaLib.ffi,
 		luaL: L,
 	}
 

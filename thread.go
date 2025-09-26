@@ -9,7 +9,7 @@ import (
 // NewThread creates a new Lua thread (coroutine), pushes it onto the stack, and returns its State.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_newthread
 func (s *State) NewThread() *State {
-	L := s.ffi.LuaNewthread(s.luaL)
+	L := luaLib.ffi.LuaNewthread(s.luaL)
 
 	return s.clone(L)
 }
@@ -23,7 +23,7 @@ func (s *State) CloseThread(from *State) (err error) {
 	if from != nil {
 		fromL = from.luaL
 	}
-	err = s.CheckError(s.ffi.LuaClosethread(s.luaL, fromL))
+	err = s.CheckError(luaLib.ffi.LuaClosethread(s.luaL, fromL))
 	return
 }
 
@@ -32,14 +32,14 @@ func (s *State) CloseThread(from *State) (err error) {
 // Deprecated: use CloseThread(nil) instead.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_resetthread
 func (s *State) ResetThread() (err error) {
-	err = s.CheckError(s.ffi.LuaResetthread(s.luaL))
+	err = s.CheckError(luaLib.ffi.LuaResetthread(s.luaL))
 	return
 }
 
 // PushThread pushes the current thread onto the Lua stack. Returns true if it's the main thread.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_pushthread
 func (s *State) PushThread() (isMain bool) {
-	isMain = s.ffi.LuaPushthread(s.luaL) == 1
+	isMain = luaLib.ffi.LuaPushthread(s.luaL) == 1
 	return
 }
 
@@ -70,7 +70,7 @@ func (s *State) YieldK(nresults int, ctx unsafe.Pointer, k KFunc) (err error) {
 		})
 	}
 
-	status := s.ffi.LuaYieldk(s.luaL, nresults, ctx, kb)
+	status := luaLib.ffi.LuaYieldk(s.luaL, nresults, ctx, kb)
 	if status != LUA_OK && status != LUA_YIELD {
 		err = s.CheckError(status)
 	}
@@ -93,10 +93,10 @@ func (s *State) Resume(from *State, narg int) (nres int32, yield bool, err error
 		fromL = from.luaL
 	}
 	var status int
-	if s.ffi.version >= 504 {
-		status = s.ffi.LuaResume(s.luaL, fromL, narg, unsafe.Pointer(&nres))
+	if luaLib.ffi.version >= 504 {
+		status = luaLib.ffi.LuaResume(s.luaL, fromL, narg, unsafe.Pointer(&nres))
 	} else {
-		status = s.ffi.LuaResume503(s.luaL, fromL, narg)
+		status = luaLib.ffi.LuaResume503(s.luaL, fromL, narg)
 	}
 	yield = status == LUA_YIELD
 	if status != LUA_OK && status != LUA_YIELD {
@@ -108,23 +108,23 @@ func (s *State) Resume(from *State, narg int) (nres int32, yield bool, err error
 // Status returns the status code of the thread (running, yielded, etc).
 // See: https://www.lua.org/manual/5.4/manual.html#lua_status
 func (s *State) Status() int {
-	return s.ffi.LuaStatus(s.luaL)
+	return luaLib.ffi.LuaStatus(s.luaL)
 }
 
 // IsYieldable reports whether the current Lua thread is yieldable.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_isyieldable
 func (s *State) IsYieldable() bool {
-	return s.ffi.LuaIsyieldable(s.luaL) == 1
+	return luaLib.ffi.LuaIsyieldable(s.luaL) == 1
 }
 
 // ToThread returns the Lua thread at the given stack index as a State.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_tothread
 func (s *State) ToThread(idx int) *State {
-	L := s.ffi.LuaTothread(s.luaL, idx)
+	L := luaLib.ffi.LuaTothread(s.luaL, idx)
 	return s.clone(L)
 }
 
 // ToPointer returns the Lua value at the given stack index as an unsafe.Pointer.
 func (s *State) ToPointer(idx int) unsafe.Pointer {
-	return s.ffi.LuaTopointer(s.luaL, idx)
+	return luaLib.ffi.LuaTopointer(s.luaL, idx)
 }
