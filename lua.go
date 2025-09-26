@@ -7,68 +7,83 @@ import (
 	"github.com/ebitengine/purego"
 )
 
-// Lib represents a loaded Lua 5.4 dynamic library binding in Go. It provides access to library-level operations and state creation (see: https://www.lua.org/manual/5.4/manual.html#4.3).
-type Lib struct {
+// luaLib is a singleton instance for managing the loaded Lua dynamic library.
+// Use Init to load a library before using it.
+// Use Deinit to release the library when it is no longer needed.
+var luaLib = new(lib)
+
+type lib struct {
 	ffi *ffi
 }
 
-// New loads a Lua 5.4 dynamic library from the given path and returns a Lib for further state management.
+func (l *lib) assert() {
+	if l == nil || l.ffi == nil {
+		panic("lua library is not loaded, call lua.Init to load a library first")
+	}
+}
+
+// Init loads a Lua dynamic library from the given path to the global singleton instance.
 // Returns an error if the library cannot be loaded.
-func New(path string) (lib *Lib, err error) {
+// Calling Init for multiple times without deinit the previous library will result in an error.
+func Init(path string) (err error) {
+	if luaLib != nil && luaLib.ffi != nil {
+		return fmt.Errorf("previous lua library is not closed, call lua.Deinit first")
+	}
+
 	ffi, err := newFFI(path)
 	if err != nil {
 		return
 	}
 
-	lib = &Lib{
+	*luaLib = lib{
 		ffi: ffi,
 	}
 
 	return
 }
 
-// Close releases the loaded Lua dynamic library and any resources associated with it in this Lib instance.
-func (l *Lib) Close() (err error) {
-	if l.ffi == nil {
-		return
-	}
+// Deinit releases the loaded Lua dynamic library from the global singleton instance.
+// Panics if the library is not initialized.
+func Deinit() (err error) {
+	luaLib.assert()
 
-	err = freeLibrary(l.ffi.lib)
+	err = freeLibrary(luaLib.ffi.lib)
 	if err == nil {
-		l.ffi = nil
+		luaLib.ffi = nil
 	}
 	return
 }
 
-// NewState creates a new Lua runtime state from this Lib (binding to the dynamic library).
+// NewState creates a new Lua runtime state.
 // Additional options may be provided for custom allocators and user data.
-// Returns a State and possibly an error if the library is closed.
-func (l *Lib) NewState(o ...stateOptFunc) (state *State, err error) {
-	if l.ffi == nil {
-		return nil, fmt.Errorf("lua library is closed")
-	}
+// Returns a State
+// Panics if the library is not initialized.
+func NewState(o ...stateOptFunc) (state *State) {
+	luaLib.assert()
 
 	opt := &stateOpt{}
 	for _, fn := range o {
 		fn(opt)
 	}
 
-	state = newState(l, opt)
+	state = newState(opt)
 
 	return
 }
 
 // BuildState create a existing Lua state from a given lua_State pointer.
-func (l *Lib) BuildState(L unsafe.Pointer, o ...stateOptFunc) (state *State) {
+// Panics if the library is not initialized.
+func BuildState(L unsafe.Pointer, o ...stateOptFunc) (state *State) {
+	luaLib.assert()
+
 	opt := &stateOpt{}
 	for _, fn := range o {
 		fn(opt)
 	}
 
 	state = &State{
-		ffi:  l.ffi,
+		ffi:  luaLib.ffi,
 		luaL: L,
-		lib:  l,
 
 		unwindingProtection: !opt.withoutUwindingProtection,
 	}
@@ -77,15 +92,24 @@ func (l *Lib) BuildState(L unsafe.Pointer, o ...stateOptFunc) (state *State) {
 }
 
 // FFI returns the underlying ffi instance for advanced usage.
-func (l *Lib) FFI() *ffi {
-	return l.ffi
+// Panics if the library is not initialized.
+func FFI() *ffi {
+	luaLib.assert()
+
+	return luaLib.ffi
 }
 
 // NewCallback creates a C function pointer that wraps a Go function
 // that accepts a State and returns an int.
-// See lua.NewCallback for details.
-func (l *Lib) NewCallback(f GoFunc, o ...stateOptFunc) uintptr {
-	return NewCallback(f, l, o...)
+// The returned pointer can be used with PushCFunction or PushCClousure.
+// Due to the limitation of Purego, only a limited number (2000) of callbacks
+// may be created in a single Go process, and any memory allocated for
+// these callbacks is never released.
+func NewCallback(f GoFunc, o ...stateOptFunc) uintptr {
+	return purego.NewCallback(func(L unsafe.Pointer) int {
+		state := BuildState(L, o...)
+		return f(state)
+	})
 }
 
 // stateOptFunc is an option setter for customizing State creation (internal use).

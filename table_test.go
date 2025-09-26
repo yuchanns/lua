@@ -455,7 +455,7 @@ func (s *Suite) TestTableMeta(assert *require.Assertions, L *lua.State) {
 	L.PushCFunction(lua.NewCallback(func(L *lua.State) int {
 		L.PushString("called")
 		return 1
-	}, L.Lib()))
+	}))
 	L.SetTable(mtIdx)
 
 	L.SetIMetaTable(tblIdx)
@@ -485,7 +485,7 @@ func (s *Suite) TestTableMeta(assert *require.Assertions, L *lua.State) {
 	L.PushCFunction(lua.NewCallback(func(L *lua.State) int {
 		L.PushString("mt called")
 		return 1
-	}, L.Lib()))
+	}))
 	L.SetTable(-3)
 	L.SetTop(tblIdx)
 

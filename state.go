@@ -20,15 +20,14 @@ type stateOpt struct {
 // See: https://www.lua.org/manual/5.4/manual.html#lua_State
 type State struct {
 	ffi *ffi
-	lib *Lib
 
 	luaL unsafe.Pointer
 
 	unwindingProtection bool
 }
 
-func newState(lib *Lib, o *stateOpt) (L *State) {
-	ffi := lib.ffi
+func newState(o *stateOpt) (L *State) {
+	ffi := luaLib.ffi
 	var luaL unsafe.Pointer
 	if o.userData != nil && o.alloc != 0 {
 		luaL = ffi.LuaNewstate(o.alloc, o.userData)
@@ -39,7 +38,6 @@ func newState(lib *Lib, o *stateOpt) (L *State) {
 	L = &State{
 		ffi:  ffi,
 		luaL: luaL,
-		lib:  lib,
 
 		unwindingProtection: !o.withoutUwindingProtection,
 	}
@@ -61,12 +59,7 @@ func (s *State) clone(L unsafe.Pointer) *State {
 	if !s.unwindingProtection {
 		o = append(o, WithoutUnwindingProtection())
 	}
-	return s.lib.BuildState(L, o...)
-}
-
-// Lib returns the parent Lib instance that created this state.
-func (s *State) Lib() *Lib {
-	return s.lib
+	return BuildState(L, o...)
 }
 
 // L returns the underlying unsafe.Pointer to the Lua state, allowing direct access to and modify the C API.

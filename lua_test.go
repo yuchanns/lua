@@ -14,7 +14,6 @@ import (
 )
 
 type Suite struct {
-	lib *lua.Lib
 }
 
 func findLocalLuaLibrary(version string) (string, error) {
@@ -51,7 +50,7 @@ func (s *Suite) Setup() (err error) {
 	if err != nil {
 		return
 	}
-	s.lib, err = lua.New(path)
+	err = lua.Init(path)
 	if err != nil {
 		return
 	}
@@ -60,10 +59,7 @@ func (s *Suite) Setup() (err error) {
 }
 
 func (s *Suite) TearDown() {
-	if s.lib == nil {
-		return
-	}
-	_ = s.lib.Close()
+	_ = lua.Deinit()
 }
 
 type funcWithState = func(*Suite, *require.Assertions, *lua.State)
@@ -73,8 +69,7 @@ func (s *Suite) testWithState(testFunc funcWithState) func(t *testing.T) {
 		t.Parallel()
 		assert := require.New(t)
 
-		L, err := s.lib.NewState()
-		assert.NoError(err)
+		L := lua.NewState()
 
 		L.OpenLibs()
 
@@ -106,8 +101,7 @@ func TestSuite(t *testing.T) {
 
 	t.Cleanup(suite.TearDown)
 
-	L, err := suite.lib.NewState()
-	assert.NoError(err)
+	L := lua.NewState()
 	t.Cleanup(L.Close)
 
 	t.Logf("Running tests for lua version %v", L.Version())
