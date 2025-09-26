@@ -194,11 +194,12 @@ func (s *State) PushCClousure(f uintptr, n int) {
 	s.ffi.LuaPushcclousure(s.luaL, f, n)
 }
 
-// NewCallback creates a C function pointer that wraps a Go function that accepts a State and
-// returns an int.
+// NewCallback creates a C function pointer that wraps a Go function
+// that accepts a State and returns an int.
 // The returned pointer can be used with PushCFunction or PushCClousure.
-// Due to the limitation of Purego, only a limited number (2000) of callbacks may be created in a single Go
-// process, and any memory allocated for these callbacks is never released.
+// Due to the limitation of Purego, only a limited number (2000) of callbacks
+// may be created in a single Go process, and any memory allocated for
+// these callbacks is never released.
 func NewCallback(f GoFunc, lib *Lib, o ...stateOptFunc) uintptr {
 	return purego.NewCallback(func(L unsafe.Pointer) int {
 		state := lib.BuildState(L, o...)

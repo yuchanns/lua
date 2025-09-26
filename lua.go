@@ -81,6 +81,13 @@ func (l *Lib) FFI() *ffi {
 	return l.ffi
 }
 
+// NewCallback creates a C function pointer that wraps a Go function
+// that accepts a State and returns an int.
+// See lua.NewCallback for details.
+func (l *Lib) NewCallback(f GoFunc, o ...stateOptFunc) uintptr {
+	return NewCallback(f, l, o...)
+}
+
 // stateOptFunc is an option setter for customizing State creation (internal use).
 type stateOptFunc func(o *stateOpt)
 
