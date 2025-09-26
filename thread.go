@@ -9,9 +9,7 @@ import (
 // NewThread creates a new Lua thread (coroutine), pushes it onto the stack, and returns its State.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_newthread
 func (s *State) NewThread() *State {
-	L := luaLib.ffi.LuaNewthread(s.luaL)
-
-	return s.clone(L)
+	return BuildState(luaLib.ffi.LuaNewthread(s.luaL))
 }
 
 // CloseThread closes the specified Lua thread (or the currently running thread if from is nil).
@@ -65,8 +63,7 @@ func (s *State) YieldK(nresults int, ctx unsafe.Pointer, k KFunc) (err error) {
 			// Use panic instead of setjmp/longjmp to avoid issues with syscall frames
 			defer panic(protectionMsg)
 
-			state := s.clone(L)
-			return k(state, status, ctx)
+			return k(BuildState(L), status, ctx)
 		})
 	}
 
@@ -120,8 +117,7 @@ func (s *State) IsYieldable() bool {
 // ToThread returns the Lua thread at the given stack index as a State.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_tothread
 func (s *State) ToThread(idx int) *State {
-	L := luaLib.ffi.LuaTothread(s.luaL, idx)
-	return s.clone(L)
+	return BuildState(luaLib.ffi.LuaTothread(s.luaL, idx))
 }
 
 // ToPointer returns the Lua value at the given stack index as an unsafe.Pointer.

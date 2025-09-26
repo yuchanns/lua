@@ -11,6 +11,7 @@ import (
 type stateOpt struct {
 	alloc    uintptr
 	userData unsafe.Pointer
+	ptr      *State
 }
 
 // State represents a single Lua interpreter state, holding runtime and memory context.
@@ -29,23 +30,28 @@ func newState(o *stateOpt) (L *State) {
 		luaL = ffi.LuaLNewstate()
 	}
 
-	L = &State{
-		luaL: luaL,
+	if o.ptr != nil {
+		L = o.ptr
+		*L = State{
+			luaL: luaL,
+		}
+	} else {
+		L = &State{
+			luaL: luaL,
+		}
 	}
 
 	// Convert Lua errors into Go panics
-	L.AtPanic(func(L *State) int {
-		err := L.checkUnprotectedError()
-
-		panic(err)
-	})
+	L.AtPanic(defaultPanicf)
 
 	return L
 }
 
-func (s *State) clone(L unsafe.Pointer) *State {
-	return BuildState(L)
-}
+var defaultPanicf = NewCallback(func(L *State) int {
+	err := L.checkUnprotectedError()
+
+	panic(err)
+})
 
 // L returns the underlying unsafe.Pointer to the Lua state, allowing direct access to and modify the C API.
 func (s *State) L() unsafe.Pointer {
@@ -76,11 +82,7 @@ type GoFunc func(L *State) int
 // Due to the limitation of Purego, only a limited number of callbacks may be created in a single Go
 // process, and any memory allocated for these callbacks is never released.
 // See: https://www.lua.org/manual/5.4/manual.html#lua_atpanic
-func (s *State) AtPanic(fn GoFunc) (old unsafe.Pointer) {
-	panicf := purego.NewCallback(func(L unsafe.Pointer) int {
-		state := s.clone(L)
-		return fn(state)
-	})
+func (s *State) AtPanic(panicf uintptr) (old unsafe.Pointer) {
 	return luaLib.ffi.LuaAtpanic(s.luaL, panicf)
 }
 
@@ -287,8 +289,7 @@ type WarnFunc func(L *State, msg string, tocont int)
 // See: https://www.lua.org/manual/5.4/manual.html#lua_setwarnf
 func (s *State) SetWarnf(fn WarnFunc, ud unsafe.Pointer) {
 	luaLib.ffi.LuaSetwarnf(s.luaL, purego.NewCallback(func(ud unsafe.Pointer, msg *byte, tocont int) {
-		state := s.clone(ud)
-		fn(state, bytePtrToString(msg), tocont)
+		fn(BuildState(ud), bytePtrToString(msg), tocont)
 	}), ud)
 }
 

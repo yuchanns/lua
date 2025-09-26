@@ -124,3 +124,12 @@ func WithAlloc[T any](
 		o.userData = unsafe.Pointer(ud)
 	}
 }
+
+// WithStatePointer sets a pointer to an existing State struct for the Lua state.
+// This allows the user to manage the State struct themselves.
+// If not set, a new State struct will be allocated by Go GC.
+func WithStatePointer(ptr *State) stateOptFunc {
+	return func(o *stateOpt) {
+		o.ptr = ptr
+	}
+}
